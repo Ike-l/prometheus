@@ -2,6 +2,8 @@
 
 use core::f64;
 
+use event_deriver::EventDeriver;
+
 use super::{
     super::{
         Res, ResMut, RefWorld, MutWorld, EventWriter, EventReader, Event
@@ -77,8 +79,8 @@ fn get_many_mut_world() {
     run_scheduler_start(scheduler);
 }
 
+#[derive(EventDeriver)]
 struct Event1 {}
-impl Event for Event1 {}
 
 fn event_writer_system(_: EventWriter<Event1>) {}
 

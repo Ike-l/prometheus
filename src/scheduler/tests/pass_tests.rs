@@ -2,6 +2,7 @@
 
 use core::f64;
 
+use event_deriver::EventDeriver;
 use small_derive_deref::{
     Deref, DerefMut
 };
@@ -173,11 +174,10 @@ fn get_many_ref_command_buffer() {
     run_scheduler_start(scheduler);
 }
 
-#[derive(Debug)]
+#[derive(Debug, EventDeriver)]
 struct Event1 {
     payload: bool,
 }
-impl Event for Event1 {}
 
 fn single_event_writer_system(mut event1: EventWriter<Event1>) {
     event1.send(Event1 {
