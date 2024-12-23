@@ -1,11 +1,16 @@
 use std::time::Duration;
 
-use super::time_plugin::prelude::Tick;
+use super::{time_plugin::prelude::Tick, DeviceEventBus, WindowEventBus};
 
-// click once = on, click after = off
+#[derive(Debug)]
+pub enum Event {
+    Window(WindowEventBus),
+    Device(DeviceEventBus)
+}
+
 #[derive(Debug, Default)]
-pub struct ToggleButtonComponent {
-    pub on: bool,
+pub struct ToggleUIComponent {
+    pub event: Option<Event>,
 }
 
 #[derive(Debug)]
@@ -20,15 +25,12 @@ impl Default for Delay {
     }
 }
 
-// click once = on, after delay = off
+
 #[derive(Debug, Default)]
-pub struct TimedButtonComponent {
-    pub on: bool,
-    pub delay: Delay,
+pub struct DelayedUIComponent {
+    pub event: Option<Event>,
+    delay_progress: Delay,
+    delay_target: Delay,
 }
 
 
-
-// input
-// pub struct ClickComponent;
-// with ClickComponent dispatch on <Entity + Event> as UIWindowEvent || UIDeviceEvent

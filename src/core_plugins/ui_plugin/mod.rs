@@ -3,7 +3,7 @@ mod ui_acceleration_structure;
 
 pub mod prelude {
     pub use super::button::{
-        ToggleButtonComponent, TimedButtonComponent, Delay
+        ToggleUIComponent, DelayedUIComponent, Delay
     };
 }
 
@@ -16,6 +16,7 @@ pub struct UIPlugin;
 impl PluginTrait for UIPlugin {
     fn build(&self, app: &mut crate::app::App) {
         app.add_system(1.001, create_acceleration_structure);
+        app.add_system(1.002, input);
 
         app.add_resource(ui_acceleration_structure::UIAccelerationStructure::default());
     }
@@ -25,3 +26,12 @@ impl PluginTrait for UIPlugin {
     }
 }
 
+pub fn input(
+    window_events: EventReader<WindowEventBus>, 
+    device_events: EventReader<DeviceEventBus>, 
+    world: MutWorld
+) {
+    // check event if a location is specified:
+    // --> find the component using QT and update its state.
+    // --> else do nothing
+}
