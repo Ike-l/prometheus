@@ -17,7 +17,7 @@ pub mod prelude {
         ui_plugin,
         label_plugin,
         acceleration_structures_plugin,
-        scale_plugin,
+        //scale_plugin,
     };
 
     #[allow(unused_braces)]

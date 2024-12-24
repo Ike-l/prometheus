@@ -23,10 +23,10 @@ use super::{
 
 const CONTROL_FLOW: ControlFlow = ControlFlow::Poll;
 
-#[derive(Debug, Deref, DerefMut, EventDeriver)]
+#[derive(Debug, Deref, DerefMut, EventDeriver, Clone)]
 pub struct WindowEventBus(pub winit::event::WindowEvent);
 
-#[derive(Debug, Deref, DerefMut, EventDeriver)]
+#[derive(Debug, Deref, DerefMut, EventDeriver, Clone)]
 pub struct DeviceEventBus(pub winit::event::DeviceEvent);
 
 #[derive(Debug, Deref, DerefMut, Default)]

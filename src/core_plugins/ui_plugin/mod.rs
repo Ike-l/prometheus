@@ -1,15 +1,28 @@
-mod button;
+mod ui_component;
 mod ui_acceleration_structure;
 
+use crate::prelude::{
+    *,
+    promethius_std::prelude::Position,
+};
+
+use ui_acceleration_structure::{
+    create_acceleration_structure, UIAccelerationStructure
+};
+use ui_component::input;
+
+use small_derive_deref::{
+    Deref, DerefMut
+};
+
 pub mod prelude {
-    pub use super::button::{
-        ToggleUIComponent, DelayedUIComponent, Delay
+    pub use super::{
+        ui_acceleration_structure::UIAccelerationStructure,
+        ui_component::{
+            Event, UIComponent
+        }
     };
 }
-
-use ui_acceleration_structure::create_acceleration_structure;
-
-use crate::prelude::*;
 
 pub struct UIPlugin;
 
@@ -17,21 +30,15 @@ impl PluginTrait for UIPlugin {
     fn build(&self, app: &mut crate::app::App) {
         app.add_system(1.001, create_acceleration_structure);
         app.add_system(1.002, input);
-
-        app.add_resource(ui_acceleration_structure::UIAccelerationStructure::default());
+        
+        app.add_resource(UIAccelerationStructure::default());
+        app.add_resource(CursorPosition::default());
     }
-
+    
     fn id(&self) -> PluginId {
         PluginId("prometheus_UIPlugin")
     }
 }
 
-pub fn input(
-    window_events: EventReader<WindowEventBus>, 
-    device_events: EventReader<DeviceEventBus>, 
-    world: MutWorld
-) {
-    // check event if a location is specified:
-    // --> find the component using QT and update its state.
-    // --> else do nothing
-}
+#[derive(Debug, Deref, DerefMut, Default)]
+pub struct CursorPosition(Position);

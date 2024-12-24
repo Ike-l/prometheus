@@ -5,7 +5,7 @@ pub mod time_plugin;
 pub mod ui_plugin;
 pub mod label_plugin;
 pub mod acceleration_structures_plugin;
-pub mod scale_plugin;
+//pub mod scale_plugin;
 
 use crate::plugins::PluginTrait;
 
@@ -18,7 +18,7 @@ pub fn get_core_plugins() -> Vec<Box<dyn PluginTrait>> {
         Box::new(ui_plugin::UIPlugin),
         Box::new(label_plugin::LabelPlugin),
         Box::new(acceleration_structures_plugin::AccelerationStructurePlugin),
-        Box::new(scale_plugin::ScalePlugin),
+        //Box::new(scale_plugin::ScalePlugin),
     ]
 }
 
