@@ -1,3 +1,8 @@
+use crate::prelude::{
+    promethius_std::prelude::Position, 
+    render_plugin::WindowDimensions
+};
+
 use super::super::TransformComposer;
 
 #[derive(Debug)]
@@ -26,14 +31,14 @@ impl OrthoProjection {
         }
     }
 
-    pub fn to_world_space(&self, x: f32, y: f32, width: f32, height: f32) -> (f32, f32) {
-        let x_ndc = (2.0 * x / width) - 1.0;
-        let y_ndc = 1.0 - (2.0 * y / height);
+    pub fn to_world_space(&self, position: &Position, window_dimensions: &WindowDimensions) -> Position {
+        let x_ndc = (2.0 * position.x / window_dimensions.width as f64) - 1.0;
+        let y_ndc = 1.0 - (2.0 * position.y / window_dimensions.height as f64);
 
-        let x_world = (self.right - self.left) / 2.0 * x_ndc + (self.right + self.left) / 2.0;
-        let y_world = (self.top - self.bottom) / 2.0 * y_ndc + (self.top + self.bottom) / 2.0;
+        let x_world = (self.right as f64 - self.left as f64) / 2.0 * x_ndc + (self.right as f64 + self.left as f64) / 2.0;
+        let y_world = (self.top as f64 - self.bottom as f64) / 2.0 * y_ndc + (self.top as f64 + self.bottom as f64) / 2.0;
 
-        (x_world, y_world)
+        Position::new(x_world, y_world, position.z)
     }
 }
 

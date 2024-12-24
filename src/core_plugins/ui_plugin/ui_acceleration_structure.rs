@@ -17,11 +17,12 @@ pub struct UIAccelerationStructure {
 }
 
 pub fn create_acceleration_structure(acc_struct: ResMut<UIAccelerationStructure>, world: RefWorld) {
-    acc_struct.value.qt = QuadTree::auto(
-        world.query::<(&ColliderComponent, &LabelComponent)>()
+    let buffer = world.query::<(&ColliderComponent, &LabelComponent)>()
             .with::<&UIComponent>()
             .iter()
             .map(|(_, (collider, label))| {
                 Collider::new(collider.clone(), label.clone())
-    }).collect::<Vec<Collider>>());
+    }).collect::<Vec<Collider>>();
+
+    acc_struct.value.qt = QuadTree::auto(buffer);
 }

@@ -61,7 +61,7 @@ impl AABB {
     }
 
     pub fn contains(&self, position: &Position) -> bool {
-        position >= &self.min && position <= &self.max
+        position.is_clamped_2d(&self.min, &self.max)
     }
 
     pub fn expand(&mut self, other: &AABB) {

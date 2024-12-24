@@ -32,10 +32,8 @@ impl AccelerationStructure for QuadTree {
         if !self.space.contains(position) {
             return vec![];
         }
-
         let middle = self.space.middle();
         let (middle_x, middle_y) = (middle.x, middle.y);
-
         let index = if position.x > middle_x { 
             if position.y > middle_y { 
                 2 
@@ -47,7 +45,6 @@ impl AccelerationStructure for QuadTree {
         } else { 
             0 
         };
-
         match self.children[index].as_ref() {
             Child::Branch(b) => {
                 b.query(position)

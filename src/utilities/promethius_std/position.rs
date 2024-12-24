@@ -31,6 +31,15 @@ impl Position {
             self.z + other.z
         )
     }
+
+    pub fn is_clamped_2d(&self, min: &Position, max: &Position) -> bool {
+        self.x >= min.x && self.y >= min.y &&
+        self.x <= max.x && self.y <= max.y
+    }
+
+    pub fn is_clamped(&self, min: &Position, max: &Position) -> bool {
+        self >= min && self <= max
+    }
 }
 
 impl PartialOrd for Position {

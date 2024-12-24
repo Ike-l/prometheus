@@ -35,7 +35,10 @@ impl LabeledEntities {
 }
 
 pub fn update_labeled_entities(mut labeled_entities: ResMut<LabeledEntities>, world: RefWorld) {
-    labeled_entities.labels = world.query::<&LabelComponent>().iter().fold(BiMap::default(), |mut acc, (e, l)| {
+    labeled_entities.labels = world.query::<&LabelComponent>()
+        .iter()
+        .fold(BiMap::default(), 
+        |mut acc, (e, l)| {
         acc.insert(l.clone(), e);
         acc
     });

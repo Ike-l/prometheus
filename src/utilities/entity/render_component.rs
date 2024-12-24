@@ -24,8 +24,9 @@ pub struct InstanceRenderComponent {
     pub local_scale: Vector3<FloatPrecision>,
     pub global_scale: Vector3<FloatPrecision>,
 
-	// model.color * instance.tint + instance.highlight;
+	/// model.color * instance.tint + instance.highlight;
     pub tint: Vector4<FloatPrecision>,
+	/// model.color * instance.tint + instance.highlight;
     pub highlight: Vector4<FloatPrecision>,
 }
 

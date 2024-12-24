@@ -230,9 +230,7 @@ pub fn render_system(object_registry: ResMut<ObjectRegistry>, state: Res<Vec<Sta
         for (pipeline_type, object_list) in &object_list {
             let pipeline = state.render_config.pipelines().get(pipeline_type).unwrap_or_else(|| panic!("No pipeline found: {:?}", pipeline_type));
             render_pass.set_pipeline(pipeline);
-            println!("New pipeline type");
             for object in object_list {
-                println!("Rendering object: {:?} with A: {:?}", object.label, object.min_alpha());
                 let instance_buffer = object.instance_buffer();
                 if instance_buffer.size() == 0 {
                     continue;

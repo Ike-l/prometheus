@@ -1,5 +1,6 @@
 mod ui_component;
 mod ui_acceleration_structure;
+mod variants;
 
 use crate::prelude::{
     *,
@@ -20,6 +21,9 @@ pub mod prelude {
         ui_acceleration_structure::UIAccelerationStructure,
         ui_component::{
             Event, UIComponent
+        },
+        variants::timed_ui_component::{
+            Delay, DelayedUIComponent
         }
     };
 }
@@ -28,8 +32,9 @@ pub struct UIPlugin;
 
 impl PluginTrait for UIPlugin {
     fn build(&self, app: &mut crate::app::App) {
-        app.add_system(1.001, create_acceleration_structure);
-        app.add_system(1.002, input);
+        app.add_system(1.0011, create_acceleration_structure);
+        app.add_system(1.0012, input);
+        //app.add_system(1.9, variants::timed_ui_component::update_delayed_ui);
         
         app.add_resource(UIAccelerationStructure::default());
         app.add_resource(CursorPosition::default());

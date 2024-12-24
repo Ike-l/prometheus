@@ -8,7 +8,7 @@ use super::{
 };
 
 // AutoCollider => AABB Calculated automatically every tick based on the `Mesh` and `ModelMatrix`
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct ColliderComponent {
     pub model_bbox: Option<AABB>,
     pub bbox: Option<AABB>,
@@ -73,5 +73,9 @@ pub fn update_colliders(world: RefWorld, object_registry: Res<ObjectRegistry>) {
 
         let aabb = AABB::new(new_min, new_max);
         collider.bbox.replace(aabb);
+
+        if collider.model_bbox.is_none() {
+            collider.model_bbox.replace(model_aabb.clone());
+        }
     }
 }
