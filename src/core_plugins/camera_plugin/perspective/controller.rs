@@ -132,6 +132,7 @@ impl CameraController for PerspController {
     }
 
     fn write_device_event(&mut self, event: &DeviceEventBus) {
+        #[allow(clippy::single_match)]
         match event.0 {
             winit::event::DeviceEvent::MouseMotion { delta } => {
                 self.process_mouse(delta.0, delta.1)

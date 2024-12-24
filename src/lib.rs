@@ -26,8 +26,8 @@ pub mod prelude {
     };
 
     pub use crate::utilities::{
-        resources, 
-        texture, 
+        resources_util, 
+        texture_util, 
         entity,
         promethius_std,
         bimap,

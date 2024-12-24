@@ -94,18 +94,18 @@ impl<'res, E: Event> SystemParam for EventReader<'res, E> {
         );
     }
 
-    unsafe fn retrieve<'r>(resources: &'r TypeMap) -> Self::Item<'r> {
+    unsafe fn retrieve(resources: &TypeMap) -> Self::Item<'_> {
         let unsafe_cell = resources
             .get(&TypeId::of::<EventQueue<E>>())
-            .expect(&format!("Retrieving event: {:?}", type_name::<E>()));
+            .unwrap_or_else(|| panic!("Retrieving event: {:?}", type_name::<E>()));
         
         let value_box = &*unsafe_cell.get();
         let value = value_box
             .downcast_ref::<Box<dyn EventQueueHandler>>()
-            .expect(&format!("Downcasting event: {:?}", type_name::<E>()))
+            .unwrap_or_else(|| panic!("Downcasting event: {:?}", type_name::<E>()))
             .as_any()
             .downcast_ref::<EventQueue<E>>()
-            .expect(&format!("Downcasting event: {:?}", type_name::<E>()));
+            .unwrap_or_else(|| panic!("Downcasting event: {:?}", type_name::<E>()));
 
         EventReader {
             events: Res { value }
@@ -127,18 +127,18 @@ impl<'res, E: Event> SystemParam for EventWriter<'res, E> {
         }
     }
 
-    unsafe fn retrieve<'r>(resources: &'r TypeMap) -> Self::Item<'r> {
+    unsafe fn retrieve(resources: &TypeMap) -> Self::Item<'_> {
         let unsafe_cell = resources
             .get(&TypeId::of::<EventQueue<E>>())
-            .expect(&format!("Retrieving event: {:?}", type_name::<E>()));
+            .unwrap_or_else(|| panic!("Retrieving event: {:?}", type_name::<E>()));
         
         let value_box = &mut *unsafe_cell.get();
         let value = value_box
             .downcast_mut::<Box<dyn EventQueueHandler>>()
-            .expect(&format!("Downcasting event: {:?}", type_name::<E>()))
+            .unwrap_or_else(|| panic!("Downcasting event: {:?}", type_name::<E>()))
             .as_any_mut()
             .downcast_mut::<EventQueue<E>>()
-            .expect(&format!("Downcasting event: {:?}", type_name::<E>()));
+            .unwrap_or_else(|| panic!("Downcasting event: {:?}", type_name::<E>()));
 
         EventWriter {
             events: ResMut { value }

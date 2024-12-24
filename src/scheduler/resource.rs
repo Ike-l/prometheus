@@ -63,7 +63,7 @@ impl<'res, T: 'static> SystemParam for Res<'res, T> {
         );
     }
 
-    unsafe fn retrieve<'r>(resources: &'r TypeMap) -> Self::Item<'r> {
+    unsafe fn retrieve(resources: &TypeMap) -> Self::Item<'_> {
         let value = Self::retrieve_by_type::<T>(resources);
         Res { value }
     }
@@ -86,7 +86,7 @@ impl<'res, T: 'static> SystemParam for ResMut<'res, T> {
         }
     }
 
-    unsafe fn retrieve<'r>(resources: &'r TypeMap) -> Self::Item<'r> {
+    unsafe fn retrieve(resources: &TypeMap) -> Self::Item<'_> {
         let value = Self::retrieve_by_type_mut::<T>(resources);
         ResMut { value }
     }

@@ -38,7 +38,7 @@ impl<'a> SystemParam for RefWorld<'a> {
         );
     }
 
-    unsafe fn retrieve<'r>(resources: &'r TypeMap) -> Self::Item<'r> {
+    unsafe fn retrieve(resources: &TypeMap) -> Self::Item<'_> {
         let value = Self::retrieve_by_type::<hecs::World>(resources);
         RefWorld { 
             world: Res { value }
@@ -63,7 +63,7 @@ impl<'a> SystemParam for MutWorld<'a> {
         }
     }
 
-    unsafe fn retrieve<'r>(resources: &'r TypeMap) -> Self::Item<'r> {
+    unsafe fn retrieve(resources: &TypeMap) -> Self::Item<'_> {
         let value = Self::retrieve_by_type_mut::<hecs::World>(resources);
         MutWorld { 
             world: ResMut { value }
@@ -78,7 +78,7 @@ impl<'a> SystemParam for CommandBuffer<'a> {
         // any number of mutable or single immutable but can only retrieve mutably so doesnt matter.
     }
 
-    unsafe fn retrieve<'r>(resources: &'r TypeMap) -> Self::Item<'r> {
+    unsafe fn retrieve(resources: &TypeMap) -> Self::Item<'_> {
         let value = Self::retrieve_by_type_mut::<hecs::CommandBuffer>(resources);
         CommandBuffer {
             command_buffer: ResMut { value }

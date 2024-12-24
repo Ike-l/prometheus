@@ -5,14 +5,14 @@ use std::{
     io::{
         BufReader, Cursor
     }, 
-    path::PathBuf
+    path::{Path, PathBuf}
 };
 
 use wgpu::util::DeviceExt;
 
 use crate::prelude::{
     object_plugin::prelude::*, 
-    texture::prelude::Texture,
+    texture_util::prelude::Texture,
 };
 
 #[derive(Debug)]
@@ -29,7 +29,7 @@ impl Resources {
         }
     }
 
-    fn path(&self, path: &PathBuf, file_name: &str) -> PathBuf {
+    fn path(&self, path: &Path, file_name: &str) -> PathBuf {
         path.join(file_name)
     }
 
@@ -130,7 +130,7 @@ impl Resources {
                             model.mesh.positions[i * 3 + 1],
                             model.mesh.positions[i * 3 + 2],
                         ],
-                        color.clone(),
+                        color,
                     )).collect::<Vec<_>>();
     
                 let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

@@ -26,7 +26,7 @@ pub struct Object {
     instance_count: std::ops::Range<u32>,
     instance_buffer: wgpu::Buffer,
     aabb: AABB,
-    min_a: f32,
+    min_alpha: f32,
     pub label: LabelComponent,
     pub camera_label: LabelComponent,
     pub pipeline: PipelineType,
@@ -46,12 +46,12 @@ impl Object {
         );
 
         let aabb = model.gen_aabb();
-        let min_a = model.min_a();
+        let min_alpha = model.min_alpha();
         Self {
             instance_count,
             instance_buffer,
             aabb,
-            min_a,
+            min_alpha,
             label,
             camera_label,
             pipeline,
@@ -67,26 +67,19 @@ impl Object {
         &self.instance_buffer
     }
 
+    /// The aabb is generated on instantiation and is immutable
     pub fn aabb(&self) -> &AABB {
         &self.aabb
     }
 
-    pub fn min_a(&self) -> &f32 {
-        &self.min_a
+    pub fn min_alpha(&self) -> &f32 {
+        &self.min_alpha
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct ObjectRegistry {
     pub objects: HashMap<LabelComponent, Object>,
-}
-
-impl Default for ObjectRegistry {
-    fn default() -> Self {
-        Self {
-            objects: HashMap::new(),
-        }
-    }
 }
 
 impl ObjectRegistry {
@@ -108,7 +101,7 @@ impl ObjectRegistry {
         object_label: &LabelComponent, 
         data: Vec<RawRenderComponent>
     ) {
-        let object = self.objects.get_mut(object_label).expect(&format!("No object found: {:?}", object_label));
+        let object = self.objects.get_mut(object_label).unwrap_or_else(|| panic!("No object found: {:?}", object_label));
 
         object.instance_count = 0..data.len() as u32;
 
@@ -143,7 +136,7 @@ pub fn update_registry_instances(
 ) {
     let state = state.first().unwrap();
 
-    object_registry.clear(&state.device(), &state.queue());
+    object_registry.clear(state.device(), state.queue());
 
     let mut objects: HashMap<&LabelComponent, Vec<RawRenderComponent>> = HashMap::new();
 
@@ -165,6 +158,6 @@ pub fn update_registry_instances(
     }
 
     for (id, data) in objects {
-        object_registry.update_object_buffer(&state.device(), &state.queue(), id, data);
+        object_registry.update_object_buffer(state.device(), state.queue(), id, data);
     }
 }

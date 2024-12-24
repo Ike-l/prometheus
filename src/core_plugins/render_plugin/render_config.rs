@@ -9,7 +9,7 @@ use crate::prelude::{
         ColoredVertex, TexturedVertex, Vertex
     },
     entity::prelude::RawRenderComponent,
-    texture::prelude::Texture,
+    texture_util::prelude::Texture,
 };
 
 #[derive(Debug, Hash, PartialEq, Eq)]
@@ -73,7 +73,7 @@ impl RenderConfig {
                 };
 
                 Self::create_render_pipeline(
-                    &device, 
+                    device, 
                     &render_pipeline_layout, 
                     config.format,
                     Some(Texture::DEPTH_FORMAT),
@@ -94,6 +94,7 @@ impl RenderConfig {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn create_render_pipeline(
         device: &wgpu::Device,
         layout: &wgpu::PipelineLayout,
@@ -224,6 +225,7 @@ struct PipelineTypeConfig {
 }
 
 impl PipelineTypeConfig {
+    #[allow(clippy::too_many_arguments)]
     fn new(
         pipeline_type: PipelineType,
         topology: wgpu::PrimitiveTopology,

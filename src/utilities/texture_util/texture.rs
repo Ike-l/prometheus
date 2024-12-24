@@ -54,6 +54,7 @@ impl Texture {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn create_texture_with_sampler(
         device: &wgpu::Device,
         label: Option<&str>,

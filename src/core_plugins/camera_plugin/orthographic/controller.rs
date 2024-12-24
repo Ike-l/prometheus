@@ -69,6 +69,7 @@ impl OrthoController {
 
 impl CameraController for OrthoController {
     fn write_window_event(&mut self, event: &WindowEventBus) {
+        #[allow(clippy::single_match)]
         match event.0 {
             winit::event::WindowEvent::KeyboardInput {
                 event:

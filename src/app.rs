@@ -41,7 +41,7 @@ impl AppBuilder {
         log::info!("Running app");
 
         let event_loop = winit::event_loop::EventLoop::new()
-            .expect(&format!("Creating the event loop"));
+            .expect("Creating the event loop");
 
         event_loop.set_control_flow(CONTROL_FLOW);
         event_loop.run_app(&mut self.app)

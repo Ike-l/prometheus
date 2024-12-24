@@ -86,11 +86,11 @@ impl Scheduler {
         system: impl IntoSystem<I, System = S>
     ) {
         assert!(!phase.is_nan(), "expected a number x: 0 <= x < 4; found NAN");
-        assert!(phase < 4. && phase >= 0., "expected a number x: 0 <= x < 4; found {phase}");
+        assert!((0. ..4.).contains(&phase), "expected a number x: 0 <= x < 4; found {phase}");
 
         self.systems
             .entry(OrderedFloat(phase))
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(Box::new(system.into_system()));
     }
 
@@ -157,11 +157,11 @@ impl Scheduler {
         resources
     }
 
-    pub fn get_world<'a>(&'a self) -> Option<MutWorld<'a>> {
+    pub fn get_world(&self) -> Option<MutWorld<'_>> {
         self.get_resource_mut::<hecs::World>().map(|world| MutWorld { world: ResMut { value: world } })
     }
 
-    pub fn get_command_buffer<'a>(&'a self) -> Option<CommandBuffer<'a>> {
+    pub fn get_command_buffer(&self) -> Option<CommandBuffer<'_>> {
         self.get_resource_mut::<hecs::CommandBuffer>().map(|command_buffer| CommandBuffer { command_buffer: ResMut { value: command_buffer } })
     }
 

@@ -37,6 +37,7 @@ impl PluginTrait for ScalePlugin {
  -- -- If using colliders for children: recalculating after each, or applying a transformation (harder?). 
  -- -- If using the model mat then can recalculate last/before the position is updated?
 
+ // MAKE SURE TO UPDATE COLLIDER WITH DIS STUFF
 */
 
 

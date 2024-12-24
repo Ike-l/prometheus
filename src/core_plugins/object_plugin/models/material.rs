@@ -1,4 +1,4 @@
-use crate::prelude::texture::prelude::Texture;
+use crate::prelude::texture_util::prelude::Texture;
 
 #[derive(Debug)]
 pub struct Material {

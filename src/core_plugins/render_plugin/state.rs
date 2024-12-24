@@ -139,7 +139,7 @@ impl State {
         }
     }
 
-    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>, persp_projections: &mut Vec<&mut PerspProjection>, window_dimensions: &mut WindowDimensions) {
+    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>, persp_projections: &mut [&mut PerspProjection], window_dimensions: &mut WindowDimensions) {
         if new_size.width > 0 && new_size.height > 0 {
             persp_projections.iter_mut().for_each(|p| p.resize(new_size.width, new_size.height));
 
@@ -224,23 +224,23 @@ pub fn render_system(object_registry: ResMut<ObjectRegistry>, state: Res<Vec<Sta
         }
 
         for objects in object_list.values_mut() {
-            objects.sort_by(|a, b| b.min_a().partial_cmp(a.min_a()).unwrap());
+            objects.sort_by(|a, b| b.min_alpha().partial_cmp(a.min_alpha()).unwrap());
         }
 
         for (pipeline_type, object_list) in &object_list {
-            let pipeline = state.render_config.pipelines().get(pipeline_type).expect(&format!("No pipeline found: {:?}", pipeline_type));
+            let pipeline = state.render_config.pipelines().get(pipeline_type).unwrap_or_else(|| panic!("No pipeline found: {:?}", pipeline_type));
             render_pass.set_pipeline(pipeline);
             println!("New pipeline type");
             for object in object_list {
-                println!("Rendering object: {:?} with A: {:?}", object.label, object.min_a());
+                println!("Rendering object: {:?} with A: {:?}", object.label, object.min_alpha());
                 let instance_buffer = object.instance_buffer();
                 if instance_buffer.size() == 0 {
                     continue;
                 }
-                let camera_bind_group = camera.get(&object.camera_label).expect(&format!("No CameraId found: {:?}", object.camera_label));
+                let camera_bind_group = camera.get(&object.camera_label).unwrap_or_else(|| panic!("No CameraId found: {:?}", object.camera_label));
 
                 render_pass.set_vertex_buffer(1, instance_buffer.slice(..));
-                render_pass.draw_model_instanced(&object.model, object.instance_count().clone(), *camera_bind_group);
+                render_pass.draw_model_instanced(&object.model, object.instance_count().clone(), camera_bind_group);
             }
         }
     }

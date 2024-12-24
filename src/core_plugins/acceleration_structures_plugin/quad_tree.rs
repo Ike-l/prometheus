@@ -36,10 +36,16 @@ impl AccelerationStructure for QuadTree {
         let middle = self.space.middle();
         let (middle_x, middle_y) = (middle.x, middle.y);
 
-        let index = if position.x > middle_x {
-            if position.y > middle_y { 2 } else { 3 }
-        } else {
-            if position.y > middle_y { 1 } else { 0 }
+        let index = if position.x > middle_x { 
+            if position.y > middle_y { 
+                2 
+            } else { 
+                3 
+            } 
+        } else if position.y > middle_y { 
+            1 
+        } else { 
+            0 
         };
 
         match self.children[index].as_ref() {
@@ -48,7 +54,7 @@ impl AccelerationStructure for QuadTree {
             },
             Child::Leaf(l) => {
                 l.clone().into_iter().filter(
-                    |collider| collider.collider.bbox.contains(position)
+                    |collider| collider.collider.bbox.as_ref().unwrap().contains(position)
                 ).collect::<Vec<Collider>>()
             }
         }
@@ -63,7 +69,7 @@ impl QuadTree {
         let mut buffers = [vec![], vec![], vec![], vec![]];
 
         buffer.into_iter().for_each(|collider| {
-            let bbox = &collider.collider.bbox;
+            let bbox = collider.collider.bbox.as_ref().unwrap();
             let mut pass = 0;
             pass += if bbox.min.x > middle_x { 1 } else { 2 };
             pass += if bbox.min.y > middle_y { 4 } else { 8 };
@@ -145,11 +151,14 @@ impl QuadTree {
     pub fn auto(buffer: Vec<Collider>) -> Self {
         let space = buffer.iter().fold(AABB { min: Position::default(), max: Position::default() }, 
             |acc, cur| {
-                let min_x = if cur.collider.bbox.min.x < acc.min.x { cur.collider.bbox.min.x } else { acc.min.x };
-                let min_y = if cur.collider.bbox.min.y < acc.min.y { cur.collider.bbox.min.y } else { acc.min.y };
+                let min = &cur.collider.bbox.as_ref().unwrap().min;
+                let max = &cur.collider.bbox.as_ref().unwrap().max;
 
-                let max_x = if cur.collider.bbox.max.x > acc.max.x { cur.collider.bbox.max.x } else { acc.max.x };
-                let max_y = if cur.collider.bbox.max.y > acc.max.y { cur.collider.bbox.max.y } else { acc.max.y };
+                let min_x = if min.x < acc.min.x { min.x } else { acc.min.x };
+                let min_y = if min.y < acc.min.y { min.y } else { acc.min.y };
+
+                let max_x = if max.x > acc.max.x { max.x } else { acc.max.x };
+                let max_y = if max.y > acc.max.y { max.y } else { acc.max.y };
 
                 let min = Position::new(min_x, min_y, 0.0);
                 let max = Position::new(max_x, max_y, 0.0);
@@ -390,7 +399,7 @@ mod tests {
         ];
         let qt = QuadTree::auto(buffer);
 
-        assert_eq!(qt.space, c_1.collider.bbox);
+        assert_eq!(&qt.space, c_1.collider.bbox.as_ref().unwrap());
 
         let buffer = vec![
             c_1.clone(),

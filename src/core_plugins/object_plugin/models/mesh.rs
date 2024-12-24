@@ -62,7 +62,7 @@ impl ColoredMesh {
             .fold(AABB::default(), |mut acc, cur| { acc.expand_pos(cur.into()); acc })
     }
 
-    pub fn min_a(&self) -> f32 {
+    pub fn min_alpha(&self) -> f32 {
         self.raw_vertex_buffer.iter().fold(1.0, |acc, curr| acc.min(curr.color[3]))
     }
 }
@@ -109,9 +109,9 @@ pub struct ColoredVertex {
     color: [f32; 4],
 }
 
-impl Into<Position> for &ColoredVertex {
-    fn into(self) -> Position {
-        Position::new(self.position[0] as f64, self.position[1] as f64, self.position[2] as f64)
+ impl From<&ColoredVertex> for Position {
+    fn from(val: &ColoredVertex) -> Self {
+        Position::new(val.position[0] as f64, val.position[1] as f64, val.position[2] as f64)
     }
 }
 
@@ -153,9 +153,9 @@ pub struct TexturedVertex {
     texture_coords: [f32; 2],
 }
 
-impl Into<Position> for &TexturedVertex {
-    fn into(self) -> Position {
-        Position::new(self.position[0] as f64, self.position[1] as f64, self.position[2] as f64)
+impl From<&TexturedVertex> for Position {
+    fn from(value: &TexturedVertex) -> Self {
+        Position::new(value.position[0] as f64, value.position[1] as f64, value.position[2] as f64)
     }
 }
 

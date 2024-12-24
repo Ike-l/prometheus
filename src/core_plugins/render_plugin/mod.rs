@@ -53,6 +53,7 @@ fn input(events: EventReader<WindowEventBus>, mut states: ResMut<Vec<State>>, wo
     let state = states.first_mut().expect("State not found.\nAdd it as a resource in build");
     
     for event in events.read() {
+        #[allow(clippy::single_match)]
         match event.0 {
             winit::event::WindowEvent::Resized(physical_size) => {
                 let mut query = world.query::<&mut CameraRenderComponent>();

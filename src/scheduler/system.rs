@@ -36,30 +36,34 @@ pub trait SystemParam {
 
     fn accesses(access: &mut AccessMap);
 
-    unsafe fn retrieve<'r>(resources: &'r TypeMap) -> Self::Item<'r>;
+    #[allow(clippy::missing_safety_doc)]
+    unsafe fn retrieve(resources: &TypeMap) -> Self::Item<'_>;
 
-    unsafe fn retrieve_by_type<'r, T: 'static>(resources: &'r TypeMap) -> &T {
+    #[allow(clippy::missing_safety_doc)]
+    unsafe fn retrieve_by_type<T: 'static>(resources: &TypeMap) -> &T {
         log::info!("Retrieving type immutably: {:?}", type_name::<T>());
         let unsafe_cell = resources
             .get(&TypeId::of::<T>())
-            .expect(&format!("Retrieving resource: {:?}", type_name::<T>()));
+            .unwrap_or_else(|| panic!("Retrieving resource: {:?}", type_name::<T>()));
         
         let value_box = &*unsafe_cell.get();
         let value = value_box.downcast_ref::<T>()
-            .expect(&format!("Downcasting resource: {:?}", type_name::<T>()));
+            .unwrap_or_else(|| panic!("Downcasting resource: {:?}", type_name::<T>()));
 
         value
     }
 
-    unsafe fn retrieve_by_type_mut<'r, T: 'static>(resources: &'r TypeMap) -> &mut T {
+    #[allow(clippy::missing_safety_doc)]
+    #[allow(clippy::mut_from_ref)]
+    unsafe fn retrieve_by_type_mut<T: 'static>(resources: &TypeMap) -> &mut T {
         log::info!("Retrieving type mutably: {:?}", type_name::<T>());
         let unsafe_cell = resources
             .get(&TypeId::of::<T>())
-            .expect(&format!("Retrieving resource: {:?}", type_name::<T>()));
+            .unwrap_or_else(|| panic!("Retrieving resource: {:?}", type_name::<T>()));
         
         let value_box = &mut *unsafe_cell.get();
         let value = value_box.downcast_mut::<T>()
-            .expect(&format!("Unboxing resource: {:?}", type_name::<T>()));
+            .unwrap_or_else(|| panic!("Downcasting resource: {:?}", type_name::<T>()));
 
         value
     }
@@ -70,6 +74,7 @@ macro_rules! impl_system {
     (
         $($params:ident),*
     ) => {
+        #[allow(clippy::too_many_arguments)]
         #[allow(non_snake_case)]
         #[allow(unused)]
         impl<F, $($params: SystemParam),*> System for FunctionSystem<($($params,)*), F>

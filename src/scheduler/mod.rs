@@ -1,11 +1,11 @@
-mod scheduler;
+mod sub_scheduler;
 mod system;
 mod resource;
 mod event;
 mod hecs_wrapper;
 mod tests;
 
-pub use scheduler::{
+pub use sub_scheduler::{
     Scheduler, TypeMap, AccessMap
 };
 
