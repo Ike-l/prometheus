@@ -22,8 +22,13 @@ pub mod prelude {
         ui_component::{
             Event, UIComponent
         },
-        variants::timed_ui_component::{
-            Delay, DelayedUIComponent
+        variants::{
+            timed_ui_component::{
+                Delay, DelayedUIComponent
+            },
+            edged_ui_component::{
+                Edge, EdgedUIComponent
+            }
         }
     };
 }
@@ -34,7 +39,8 @@ impl PluginTrait for UIPlugin {
     fn build(&self, app: &mut crate::app::App) {
         app.add_system(1.0011, create_acceleration_structure);
         app.add_system(1.0012, input);
-        //app.add_system(1.9, variants::timed_ui_component::update_delayed_ui);
+        app.add_system(1.00115, variants::timed_ui_component::update_delayed_ui);
+        app.add_system(1.00001, variants::edged_ui_component::store_lens);
         
         app.add_resource(UIAccelerationStructure::default());
         app.add_resource(CursorPosition::default());
