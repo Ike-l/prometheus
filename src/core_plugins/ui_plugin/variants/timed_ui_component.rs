@@ -62,7 +62,9 @@ impl DelayedUIComponent {
 
 pub fn update_delayed_ui(world: MutWorld, time: Res<Time>) {
     for (_, (ui, delay)) in &mut world.query::<(&mut UIComponent, &mut DelayedUIComponent)>() {
-        if ui.event_buffer.len() != 0 {
+        // when no events it ensures the delay is reset.
+        // when the first event is added it starts progress
+        if ui.event_buffer.len() > 0 {
             match &mut delay.delay_progress {
                 Delay::Tick(t) => t.0 += 1,
                 Delay::Time(t) => *t += time.dt,
