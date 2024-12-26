@@ -28,11 +28,15 @@ use state::{
 
 pub struct RenderPlugin;
 
+pub const CREATE_STATES: f64 = 0.001;
+pub const RENDER_SYSTEM: f64 = 1.500;
+pub const RENDER_INPUT: f64 = 1.001;
+
 impl PluginTrait for RenderPlugin {
     fn build(&self, app: &mut crate::app::App) {
         app.add_system(0.001, create_states);
-        app.add_system(1.500, render_system);
         app.add_system(1.001, input);
+        app.add_system(1.500, render_system);
 
         app.add_resource(Vec::<State>::new());
         app.add_resource(WindowDimensions::default());

@@ -12,6 +12,7 @@ pub mod prelude {
         quad_tree::QuadTree, 
         AccelerationStructure,
         aabb::AABB,
+        UPDATE_COLLIDERS,
         collider::{
             Collider, ColliderComponent
         }
@@ -20,9 +21,11 @@ pub mod prelude {
 
 pub struct AccelerationStructurePlugin;
 
+pub const UPDATE_COLLIDERS: f64 = 1.001;
+
 impl PluginTrait for AccelerationStructurePlugin {
     fn build(&self, app: &mut crate::app::App) {
-        app.add_system(1.001, collider::update_colliders);
+        app.add_system(UPDATE_COLLIDERS, collider::update_colliders);
     }
     fn id(&self) -> PluginId {
         PluginId("prometheus_AccelerationStructurePlugin")

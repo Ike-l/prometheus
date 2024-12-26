@@ -20,17 +20,26 @@ pub mod prelude {
     pub use perspective::{
         PerspController, PerspProjection, PerspUniform, PerspView
     };
+
+    pub use super::{
+        CAMERA_INPUT, UPDATE_CAMERA_BIND_GROUPS, UPDATE_CAMERA
+    };
 }
+
 
 use crate::prelude::*;
 
 pub struct CameraPlugin;
 
+pub const UPDATE_CAMERA_BIND_GROUPS: f64 = render_plugin::RENDER_SYSTEM - 0.002;
+pub const CAMERA_INPUT: f64 = render_plugin::RENDER_INPUT + 0.001;
+pub const UPDATE_CAMERA: f64 = CAMERA_INPUT + 0.001;
+
 impl PluginTrait for CameraPlugin {
     fn build(&self, app: &mut crate::app::App) {
-        app.add_system(1.498, camera::update_camera_bind_group);
-        app.add_system(1.002, camera::input);
-        app.add_system(1.003, camera::update_camera);
+        app.add_system(UPDATE_CAMERA_BIND_GROUPS, camera::update_camera_bind_group);
+        app.add_system(CAMERA_INPUT, camera::input);
+        app.add_system(UPDATE_CAMERA, camera::update_camera);
 
     }
     fn id(&self) -> PluginId {
