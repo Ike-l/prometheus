@@ -205,31 +205,55 @@ mod tests {
     fn generate_quadrants() -> Vec<Collider> {
         vec![
             Collider::new(
-                ColliderComponent::new(AABB {
-                    min: Position::new(3.0, 3.0, 0.0),
-                    max: Position::new(6.0, 6.0, 0.0),
-                }),
+                ColliderComponent { 
+                    bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    }),
+                    model_bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    })
+                },
                 LabelComponent::new("0"),
             ),
             Collider::new(
-                ColliderComponent::new(AABB {
-                    min: Position::new(3.0, -6.0, 0.0),
-                    max: Position::new(6.0, -3.0, 0.0),
-                }),
+                ColliderComponent {
+                    bbox: Some(AABB {
+                        min: Position::new(3.0, -6.0, 0.0),
+                        max: Position::new(6.0, -3.0, 0.0),
+                    }),
+                    model_bbox: Some(AABB {
+                        min: Position::new(3.0, -6.0, 0.0),
+                        max: Position::new(6.0, -3.0, 0.0),
+                    })
+                },
                 LabelComponent::new("1"),
             ),
             Collider::new(
-                ColliderComponent::new(AABB {
-                    min: Position::new(-6.0, -6.0, 0.0),
-                    max: Position::new(-3.0, -3.0, 0.0),
-                }),
+                ColliderComponent {
+                    bbox: Some(AABB {
+                        min: Position::new(-6.0, -6.0, 0.0),
+                        max: Position::new(-3.0, -3.0, 0.0),
+                    }),
+                    model_bbox: Some(AABB {
+                        min: Position::new(-6.0, -6.0, 0.0),
+                        max: Position::new(-3.0, -3.0, 0.0),
+                    })
+                },
                 LabelComponent::new("2"),
             ),
             Collider::new(
-                ColliderComponent::new(AABB {
-                    min: Position::new(-6.0, 3.0, 0.0),
-                    max: Position::new(-3.0, 6.0, 0.0),
-                }),
+                ColliderComponent {
+                    bbox: Some(AABB {
+                        min: Position::new(-6.0, 3.0, 0.0),
+                        max: Position::new(-3.0, 6.0, 0.0),
+                    }),
+                    model_bbox: Some(AABB {
+                        min: Position::new(-6.0, 3.0, 0.0),
+                        max: Position::new(-3.0, 6.0, 0.0),
+                    }),
+                },
                 LabelComponent::new("3"),
             ),
         ]
@@ -238,31 +262,55 @@ mod tests {
     fn generate_overlapped() -> Vec<Collider> {
         vec![
             Collider::new(
-                ColliderComponent::new(AABB {
-                    min: Position::new(3.0, 3.0, 0.0),
-                    max: Position::new(6.0, 6.0, 0.0),
-                }),
+                ColliderComponent {
+                    bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    }),
+                    model_bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    })
+                },
                 LabelComponent::new("0"),
             ),
             Collider::new(
-                ColliderComponent::new(AABB {
-                    min: Position::new(3.0, 3.0, 0.0),
-                    max: Position::new(6.0, 6.0, 0.0),
-                }),
+                ColliderComponent {
+                    bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    }),
+                    model_bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    })
+                },
                 LabelComponent::new("1"),
             ),
             Collider::new(
-                ColliderComponent::new(AABB {
-                    min: Position::new(3.0, 3.0, 0.0),
-                    max: Position::new(6.0, 6.0, 0.0),
-                }),
+                ColliderComponent {
+                    bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    }),
+                    model_bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    }),
+                },
                 LabelComponent::new("2"),
             ),
             Collider::new(
-                ColliderComponent::new(AABB {
-                    min: Position::new(3.0, 3.0, 0.0),
-                    max: Position::new(6.0, 6.0, 0.0),
-                }),
+                ColliderComponent {
+                    bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    }),
+                    model_bbox: Some(AABB {
+                        min: Position::new(3.0, 3.0, 0.0),
+                        max: Position::new(6.0, 6.0, 0.0),
+                    })
+                },
                 LabelComponent::new("3"),
             ),
         ]
@@ -377,18 +425,30 @@ mod tests {
     #[test]
     fn auto_correct_space() {
         let c_1 = Collider::new(
-            ColliderComponent::new(AABB::new(
-                Position::new(-2.0, -2.0, 0.0), 
-                Position::new(2.0, 2.0, 0.0)
-            )), 
+            ColliderComponent {
+                bbox: Some(AABB::new(
+                    Position::new(-2.0, -2.0, 0.0), 
+                    Position::new(2.0, 2.0, 0.0)
+                )),
+                model_bbox: Some(AABB::new(
+                    Position::new(-2.0, -2.0, 0.0), 
+                    Position::new(2.0, 2.0, 0.0)
+                )),
+            }, 
             LabelComponent::new("0")
         );
 
-        let c_2 = Collider::new(
-            ColliderComponent::new(AABB::new(
-                Position::new(6.0, 6.0, 0.0), 
-                Position::new(8.0, 8.0, 0.0)
-            )), 
+    let c_2 = Collider::new(
+        ColliderComponent {
+                bbox: Some(AABB::new(
+                    Position::new(6.0, 6.0, 0.0), 
+                    Position::new(8.0, 8.0, 0.0)
+                )),
+                model_bbox: Some(AABB::new(
+                    Position::new(6.0, 6.0, 0.0), 
+                    Position::new(8.0, 8.0, 0.0)
+                )),
+            }, 
             LabelComponent::new("0")
         );
         let buffer = vec![
