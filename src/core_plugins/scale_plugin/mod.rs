@@ -1,25 +1,12 @@
-mod position_scale_component;
-mod size_scale_component;
-
 use crate::prelude::*;
 
-pub mod prelude {
-    #[allow(unused_braces)]
-    pub use super::{
-        position_scale_component::PositionScaleComponent,
-        size_scale_component::SizeScaleComponent,
-    };
-}
-
+pub mod prelude {}
 
 pub struct ScalePlugin;
 
-const UPDATE_PHASE: f64 = 1.001;
-
 impl PluginTrait for ScalePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(UPDATE_PHASE, size_scale_component::update_size);
-        app.add_system(UPDATE_PHASE + 0.001, position_scale_component::update_position);
+        todo!()
     }
 
     fn id(&self) -> PluginId {
@@ -28,16 +15,44 @@ impl PluginTrait for ScalePlugin {
 }
 
 /*
- Position stay relative to parent, Position is {x%;y%} of parent width/height
- Size stay relative to parent, Width/Height is {x%;y%} of parent width/height
+GOAL OVERVIEW: 
+* Want to set an Object's attributes based on another's
+* Want to set an Object's position based on another's
 
- make a tree of all, 
- -- BFS updating the size then position in order, 
- -- updating Colliders: 
- -- -- If using colliders for children: recalculating after each, or applying a transformation (harder?). 
- -- -- If using the model mat then can recalculate last/before the position is updated?
+* Result: An object which is "Contained" in another
 
- // MAKE SURE TO UPDATE COLLIDER WITH DIS STUFF
+DECOMPOSITION:
+get Req (1): Dimensions (height, width). 
+get Req (2): Wall vectors, i.e left wall.
+get Req (3): Wall vertices, i.e bottom left position. 
+
+set Req (1): Dimensions (height, width) via `ModelMatrix`
+set Req (2): Positions ([min,max] [x,y]) via `ModelMatrix`
+
+SOLUTION:
+# Rotation means it would get the wrong dimensions
+get (1): apply ((model matrix) - rotation) to (vectors between [x,y] from ((model aabb) [min,max])). Magnitudes are [width,height].
+get (2): apply (model matrix) to (vectors between [x,y] from ((model aabb) [min,max])). Directions are `Wall vectors`.
+get (3): apply (model matrix) to (model aabb). New aabb has the `Wall vertices`.
+
+set (1): todo!()
+set (2): todo!()
+
+EXCEPTION CASES:
+`container` as the `window`:
+get Req (1): `Res<WindowDimensions> from `RenderPlugin`` 
+get Req (2): Always(?) [0, 1, 0] for left wall, [1, 0, 0] for bottom wall
+get Req (3): use a "camera" and NDC
+
+APPLICATION:
+-- Example: Object1 as `o1` and `container`, Object2 as `o2` and `contained`, [x,y,a,b] as floats;
+# * [set Req (2)] o2.[min,max].[x,y] to [get Req (3)] o1.[min,max].[x,y] (+ [get Req (1)] o1.[width,height] (*[x,y,a,b]) along [+,-] [get Req (2)]
+* set o2.min.x to o1.min.x (+ o1.width (*x) along (bottom wall)).
+* set o2.min.y to o1.min.y (+ o1.height (*a) along (left wall)). 
+* set o2.max.x to o1.max.x (- o1.width (*y) along -(bottom wall)). 
+* set o2.max.y to o1.max.y (- o1.height (*b) along -(left wall)).
+
+Note: using `set min and max` strategy. Can use simple algebra to determine the `set min and dimensions` strategy - Which uses set (1)
 */
 
 
