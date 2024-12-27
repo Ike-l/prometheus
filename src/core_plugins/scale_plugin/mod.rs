@@ -15,6 +15,13 @@ impl PluginTrait for ScalePlugin {
 }
 
 /*
+Syntax rules: 
+Using `[]` means you should read the whole sentence, each time, replacing the token with one of the elements.
+Using `(,)` means both of the elements at the same time.
+Using `()` means the inner is a separate and collected token.
+Using `\` as the escaping character
+Using \`\` clarifies a variable or name is involved
+
 GOAL OVERVIEW: 
 * Want to set an Object's attributes based on another's
 * Want to set an Object's position based on another's
@@ -22,17 +29,17 @@ GOAL OVERVIEW:
 * Result: An object which is "Contained" in another
 
 DECOMPOSITION:
-get Req (1): Dimensions (height, width). 
+get Req (1): Dimensions (height,width). 
 get Req (2): Wall vectors, i.e left wall.
 get Req (3): Wall vertices, i.e bottom left position. 
 
-set Req (1): Dimensions (height, width) via `ModelMatrix`
-set Req (2): Positions ([min,max] [x,y]) via `ModelMatrix`
+set Req (1): Dimensions (height,width) via `ModelMatrix`
+set Req (2): Positions (min,max) via `ModelMatrix`
 
 SOLUTION:
 # Rotation means it would get the wrong dimensions
-get (1): apply ((model matrix) - rotation) to (vectors between [x,y] from ((model aabb) [min,max])). Magnitudes are [width,height].
-get (2): apply (model matrix) to (vectors between [x,y] from ((model aabb) [min,max])). Directions are `Wall vectors`.
+get (1): apply ((model matrix) - rotation) to (vectors between [x,y] from ((model aabb) (min,max))). Magnitudes are `(width,height)`.
+get (2): apply (model matrix) to (vectors between [x,y] from ((model aabb) (min,max))). Directions are `Wall vectors`.
 get (3): apply (model matrix) to (model aabb). New aabb has the `Wall vertices`.
 
 set (1): todo!()
@@ -41,8 +48,8 @@ set (2): todo!()
 EXCEPTION CASES:
 `container` as the `window`:
 get Req (1): `Res<WindowDimensions> from `RenderPlugin`` 
-get Req (2): Always(?) [0, 1, 0] for left wall, [1, 0, 0] for bottom wall
-get Req (3): use a "camera" and NDC
+get Req (2): Always(?) `[0, 1, 0]` for `left wall`, `[1, 0, 0]` for `bottom wall`
+get Req (3): use a "camera" and "WGPU NDC"
 
 APPLICATION:
 -- Example: Object1 as `o1` and `container`, Object2 as `o2` and `contained`, [x,y,a,b] as floats;
