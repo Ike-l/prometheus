@@ -100,12 +100,12 @@ fn get_aabb_as_cgmath() -> (Point3<FloatPrecision>, Point3<FloatPrecision>) {
 	(position_to_point(get_aabb().min), position_to_point(get_aabb().max))
 }
 
-fn position_to_point(a: Position) -> Point3<FloatPrecision> {
-	Point3::new(a.x as FloatPrecision, a.y as FloatPrecision, a.z as FloatPrecision)
+fn position_to_point(pos: Position) -> Point3<FloatPrecision> {
+	Point3::new(pos.x as FloatPrecision, pos.y as FloatPrecision, pos.z as FloatPrecision)
 }
 
-fn point_to_vector(a: Point3<FloatPrecision>) -> Vector3<FloatPrecision> {
-	Vector3::new(a.x, a.y, a.z)
+fn point_to_vector(point: Point3<FloatPrecision>) -> Vector3<FloatPrecision> {
+	Vector3::new(point.x, point.y, point.z)
 }
 
 #[test]
@@ -166,16 +166,15 @@ fn set_all() {
 
 fn test_min(
 	mut instance: InstanceRenderComponent,
-	self_min: Position,
+	mesh_min: Position,
 	target_min: Position,
 ) {
 	instance.set_min(
-		&self_min, 
+		&mesh_min, 
 		&target_min
 	).unwrap();
 
-
-	let new_min = instance.model_position(&self_min);
+	let new_min = instance.model_position(&mesh_min);
 
 	approx_equal(
 		point_to_vector(
@@ -188,9 +187,22 @@ fn test_min(
 }
 
 #[test]
-fn set_min() {
+fn set_min_with_translation() {
 	test_min(
 		InstanceRenderComponent::default(), 
+		get_aabb().min,
+		Position::new(3.0, 6.0, 8.0)
+	);
+}
+
+#[test]
+// since it overrides the "min" by adjusting it relative i.e 3.0 + `6.0`, 6.0 + `1.0`, 8.0 + `3.0`
+#[should_panic(expected = "Expected: Vector3 [3.0, 6.0, 8.0], Got: Vector3 [9.0, 7.0, 11.0]")]
+fn set_min_with_world_translation() {
+	let mut i = InstanceRenderComponent::default();
+	i.world_translation = Vector3::new(6.0, 1.0, 3.0);
+	test_min(
+		i, 
 		get_aabb().min,
 		Position::new(3.0, 6.0, 8.0)
 	);
@@ -214,7 +226,7 @@ fn set_min_dims() {
 }
 
 #[test]
-fn set_min_model_rotations() {
+fn set_min_rotations() {
 	let mut i = InstanceRenderComponent::default();
 	let current_aabb = get_aabb();
 
@@ -228,29 +240,110 @@ fn set_min_model_rotations() {
 	);
 }
 
-// set min but instance has:
-/*
-	0. None
-	1. a custom width and height
-	2. a custom model rotation
-	3. a custom world rotation
-	4. a custom world translation
+#[test]
+fn set_min_all() {
+	let mut i = InstanceRenderComponent::default();
+	let current_aabb = get_aabb();
+	let target_aabb = get_target_aabb();
 
-	5. 1. + 2.
-	6. 1. + 3.
-	7. 1. + 4.
+	i.set_width(current_aabb.width() as f32, target_aabb.width() as f32).unwrap();
+	i.set_height(current_aabb.height() as f32, target_aabb.height() as f32).unwrap();
+	i.set_depth(current_aabb.depth() as f32, target_aabb.depth() as f32).unwrap();
+	i.model_rotate(&Deg(123.0), &Vector3::unit_y());
+	i.world_rotate(&Deg(321.0), &Vector3::unit_z());
 
-	8. 2. + 3.
-	9. 2. + 4.
+	test_min(
+		i,
+		current_aabb.min, 
+		Position::new(3.0, 6.0, 8.0)
+	);
+}
 
-	10. 3. + 4.
 
-	11. 1. + 2. + 3.
-	12. 1. + 2. + 4.
+fn test_min_max(
+	mut instance: InstanceRenderComponent,
+	mesh_min: Position,
+	mesh_max: Position,
+	target_min: Position,
+	target_max: Position,
+) {
+	instance.set_min_max(
+		&mesh_min,
+		&mesh_max, 
+		&target_min,
+		&target_max
+	).unwrap();
 
-	13. 1. + 3. + 4.
-	
-	14. 2. + 3. + 4.
-	
-	15. 1. + 2. + 3. + 4.
-*/
+	let new_min = instance.model_position(&mesh_min);
+	let new_max = instance.model_position(&mesh_max);
+
+	approx_equal(
+		point_to_vector(
+			position_to_point(new_min)
+		), 
+		point_to_vector(
+			position_to_point(target_min)
+		)
+	);
+
+	approx_equal(
+		point_to_vector(
+			position_to_point(new_max)
+		), 
+		point_to_vector(
+			position_to_point(target_max)
+		)
+	);
+}
+
+#[test]
+fn set_min_max() {
+	test_min_max(
+		InstanceRenderComponent::default(), 
+		get_aabb().min,
+		get_aabb().max,
+		Position::new(3.0, 5.0, 8.0),
+		Position::new(6.0, 10.0, 16.0),
+	);
+}
+
+#[test]
+fn set_min_max_dims() {
+	let mut i = InstanceRenderComponent::default();
+	let current_aabb = get_aabb();
+	let target_aabb = get_target_aabb();
+
+	i.set_width(current_aabb.width() as f32, target_aabb.width() as f32).unwrap();
+	i.set_height(current_aabb.height() as f32, target_aabb.height() as f32).unwrap();
+	i.set_depth(current_aabb.depth() as f32, target_aabb.depth() as f32).unwrap();
+
+	test_min_max(
+		i,
+		current_aabb.min, 
+		current_aabb.max,
+		Position::new(3.0, 6.0, 8.0),
+		Position::new(12.0, 32.0, 42.0)
+	);
+}
+
+// dont really know what to do here.
+// I would need to see it visually and play around with it. 
+// (yes it has taken me this long to not even solve the problem cause i did it theoretically in my head) 
+// (visualising *6* matrix transformations at once in *3D* with arbitrary meshes, min AND max points strains my head)
+#[test]
+#[should_panic]
+fn set_min_max_rotations() {
+	let mut i = InstanceRenderComponent::default();
+	let current_aabb = get_aabb();
+
+	i.model_rotate(&Deg(123.0), &Vector3::unit_y());
+	i.world_rotate(&Deg(321.0), &Vector3::unit_z());
+
+	test_min_max(
+		i,
+		current_aabb.min, 
+		current_aabb.max,
+		Position::new(3.0, 6.0, 8.0),
+		Position::new(12.0, 32.0, 42.0),
+	);
+}

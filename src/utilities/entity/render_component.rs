@@ -1,5 +1,5 @@
 use anyhow::{
-	Error, Result
+	Context, Error, Result
 };
 
 use crate::prelude::{
@@ -136,52 +136,73 @@ impl InstanceRenderComponent {
 		Ok(())
 	}
 
+	pub fn set_dimensions(&mut self, current_dimensions: &Position, target_dimensions: &Position) -> Result<()> {
+		self.set_width(current_dimensions.x as f32, target_dimensions.x as f32)?;
+		self.set_height(current_dimensions.y as f32, target_dimensions.y as f32)?;
+		self.set_depth(current_dimensions.z as f32, target_dimensions.z as f32)?;
+
+		Ok(())
+	}
+
 	pub fn set_min(
 		&mut self,  
-		self_min: &Position, 
+		mesh_min: &Position, 
 		target_min: &Position
 	) -> Result<(), Error> {
 		// spent a week on this please dont ask me how it works jk... it is quite intuitive if u abstract it.
 
-		// could just set it to 0 OR exclude it from the calculation where i use outer_model_matrix but this is easier
-		assert_eq!(self.world_translation, Vector3::from_value(0.0));
+		// doing this means you can override the set_min and adjust it *relative* to the *target_min* by just changing the world translation
+		// to undo this change `inv_out` to self.outer_model_matrix() . inverse yada yada
+		let outer_model_matrix_excluding_translation = Matrix4::from(self.world_rotation) *
+        Matrix4::from_nonuniform_scale(self.world_scale.x, self.world_scale.y, self.world_scale.z);
 
-		// fine to set to 0 because it is overrided anyways
-		self.model_translation = Vector3::from_value(0.0);
+		let inv_out = outer_model_matrix_excluding_translation.inverse_transform().context("failed to inverse the world transformations")?;
+
+		// doing this means i dont have to set the model translation to 0
+		// to undo this change it to self.inner_model_matrix() and set the model translation to 0.0
+		let inner_model_matrix_excluding_translation = Matrix4::from(self.model_rotation) *
+        Matrix4::from_nonuniform_scale(self.model_scale.x, self.model_scale.y, self.model_scale.z);
+
 		self.model_translation = (
 			(
-				self
-					.outer_model_matrix()
-					.inverse_transform()
-					.unwrap() * 
+				inv_out * 
 				target_min.position
 					.to_vec()
-					.cast::<f32>()
+					.cast()
 					.unwrap()
 					.extend(1.0)
 			) - 
 			(
-				self
-					.inner_model_matrix() * 
-				self_min.position
+				inner_model_matrix_excluding_translation * 
+				mesh_min.position
 					.to_vec()
-					.cast::<f32>()
+					.cast()
 					.unwrap()
 					.extend(1.0)
 				)
 		).truncate();
 		
 	    Ok(())
-}
+	}
 
 	pub fn set_min_max(
 		&mut self,
-		_self_min: &Position,
-		_self_max: &Position,
-		_target_min: &Position,
-		_target_max: &Position,
+		mesh_min: &Position,
+		self_max: &Position,
+		target_min: &Position,
+		target_max: &Position,
 	) -> Result<(), Error> {
-		todo!()
+		// see tests for why
+		assert_eq!(self.model_rotation, Quaternion::one());
+		assert_eq!(self.world_rotation, Quaternion::one());
+
+		let current_dimensions = self_max - mesh_min;
+		let target_dimensions = target_max - target_min;
+
+		self.set_dimensions(&current_dimensions, &target_dimensions)?;
+		self.set_min(&mesh_min, target_min)?;
+
+		Ok(())
 	}
 }
 
