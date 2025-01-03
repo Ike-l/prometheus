@@ -34,6 +34,12 @@ pub mod prelude {
     };
 }
 
+// formula for dynamic UI components:
+// let [min/max] = self_[min/max].[x/y/z] [+/-] self_[width/height/depth] * scale * (normalised [width/height/depth] direction.[x/y/z])
+// instance.set_[min/min_max](^...)
+//
+// where normalised direction: instance.normalised yada yada
+
 pub struct UIPlugin;
 
 pub const CREATE_AS: f64 = acceleration_structures_plugin::UPDATE_COLLIDERS + 0.000_1;

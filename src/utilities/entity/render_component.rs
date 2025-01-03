@@ -97,8 +97,20 @@ impl InstanceRenderComponent {
     }
 
 	pub fn model_vertex(&self, vertex: Vector4<FloatPrecision>) -> Vector4<FloatPrecision> {
-		if vertex.w != 1.0 { warn!("Vertex taken as direction, translations won't apply") }
+		if vertex.w == 0.0 { warn!("Vertex is a direction, translations won't apply") }
 		self.model_matrix() * vertex
+	}
+
+	pub fn normalised_width_dir(&self) -> Vector3<FloatPrecision> {
+		self.model_vertex(Vector4::unit_x()).truncate()
+	}
+
+	pub fn normalised_height_dir(&self) -> Vector3<FloatPrecision> {
+		self.model_vertex(Vector4::unit_y()).truncate()
+	}
+
+	pub fn normalised_depth_dir(&self) -> Vector3<FloatPrecision> {
+		self.model_vertex(Vector4::unit_z()).truncate()
 	}
 
 	pub fn model_position(&self, position: &Position) -> Position {
