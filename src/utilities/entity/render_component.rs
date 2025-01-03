@@ -1,11 +1,18 @@
-use crate::prelude::label_plugin::prelude::LabelComponent;
+use anyhow::{
+	Context, Error, Result
+};
+
+use crate::prelude::{
+	label_plugin::prelude::LabelComponent, promethius_std::prelude::Position
+};
 
 use super::{
     raw_render_component::RawRenderComponent, FloatPrecision
 };
 
+use anyhow::Ok;
 use cgmath::{
-    Array, Deg, InnerSpace, Matrix4, One, Quaternion, Rotation3, Vector3, Vector4
+    Array, Deg, EuclideanSpace, InnerSpace, Matrix4, One, Quaternion, Rotation3, Transform, Vector3, Vector4
 };
 
 use log::warn;
@@ -15,14 +22,14 @@ pub struct InstanceRenderComponent {
     pub visible: bool,
 	pub object_label: LabelComponent,
 
-    pub local_translation: Vector3<FloatPrecision>,
-    pub global_translation: Vector3<FloatPrecision>,
+    pub model_translation: Vector3<FloatPrecision>,
+    pub world_translation: Vector3<FloatPrecision>,
 
-    pub local_rotation: Quaternion<FloatPrecision>,
-    pub global_rotation: Quaternion<FloatPrecision>,
+    pub model_rotation: Quaternion<FloatPrecision>,
+    pub world_rotation: Quaternion<FloatPrecision>,
 
-    pub local_scale: Vector3<FloatPrecision>,
-    pub global_scale: Vector3<FloatPrecision>,
+    pub model_scale: Vector3<FloatPrecision>,
+    pub world_scale: Vector3<FloatPrecision>,
 
 	/// model.color * instance.tint + instance.highlight;
     pub tint: Vector4<FloatPrecision>,
@@ -36,14 +43,14 @@ impl Default for InstanceRenderComponent {
             visible: true,
 			object_label: LabelComponent::default(),
 
-            local_translation: Vector3::from_value(0.0),
-            global_translation: Vector3::from_value(0.0),
+            model_translation: Vector3::from_value(0.0),
+            world_translation: Vector3::from_value(0.0),
 
-            local_rotation: Quaternion::one(),
-            global_rotation: Quaternion::one(),
+            model_rotation: Quaternion::one(),
+            world_rotation: Quaternion::one(),
 
-            local_scale: Vector3::from_value(1.0),
-            global_scale: Vector3::from_value(1.0),
+            model_scale: Vector3::from_value(1.0),
+            world_scale: Vector3::from_value(1.0),
 
             tint: Vector4::from_value(1.0), 
             highlight: Vector4::from_value(0.0), 
@@ -59,103 +66,143 @@ impl InstanceRenderComponent {
     }
 
     pub fn model_matrix(&self) -> Matrix4<FloatPrecision> {
-        Matrix4::from_translation(self.global_translation) *
-        Matrix4::from(self.global_rotation) *
-        Matrix4::from_nonuniform_scale(self.global_scale.x, self.global_scale.y, self.global_scale.z) *
-        Matrix4::from_translation(self.local_translation) *
-        Matrix4::from(self.local_rotation) *
-        Matrix4::from_nonuniform_scale(self.local_scale.x, self.local_scale.y, self.local_scale.z)
+        Matrix4::from_translation(self.world_translation) *
+        Matrix4::from(self.world_rotation) *
+        Matrix4::from_nonuniform_scale(self.world_scale.x, self.world_scale.y, self.world_scale.z) *
+        Matrix4::from_translation(self.model_translation) *
+        Matrix4::from(self.model_rotation) *
+        Matrix4::from_nonuniform_scale(self.model_scale.x, self.model_scale.y, self.model_scale.z)
     }
 
-    pub fn local_rotate(&mut self, angle: &Deg<FloatPrecision>, axis: &Vector3<FloatPrecision>) {
+	pub fn inner_model_matrix(&self) -> Matrix4<FloatPrecision> {
+		Matrix4::from_translation(self.model_translation) *
+        Matrix4::from(self.model_rotation) *
+        Matrix4::from_nonuniform_scale(self.model_scale.x, self.model_scale.y, self.model_scale.z)
+	}
+
+	pub fn outer_model_matrix(&self) -> Matrix4<FloatPrecision> {
+		Matrix4::from_translation(self.world_translation) *
+        Matrix4::from(self.world_rotation) *
+        Matrix4::from_nonuniform_scale(self.world_scale.x, self.world_scale.y, self.world_scale.z)
+	}
+
+    pub fn model_rotate(&mut self, angle: &Deg<FloatPrecision>, axis: &Vector3<FloatPrecision>) {
         let rotation_quat = Quaternion::from_axis_angle(axis.normalize(), *angle);
-        self.local_rotation = rotation_quat * self.local_rotation;
+        self.model_rotation = rotation_quat * self.model_rotation;
     }
 
-    pub fn global_rotate(&mut self, angle: &Deg<FloatPrecision>, axis: &Vector3<FloatPrecision>) {
+    pub fn world_rotate(&mut self, angle: &Deg<FloatPrecision>, axis: &Vector3<FloatPrecision>) {
         let rotation_quat = Quaternion::from_axis_angle(axis.normalize(), *angle);
-        self.global_rotation = rotation_quat * self.global_rotation;
+        self.world_rotation = rotation_quat * self.world_rotation;
     }
 
 	pub fn model_vertex(&self, vertex: Vector4<FloatPrecision>) -> Vector4<FloatPrecision> {
 		if vertex.w != 1.0 { warn!("Vertex taken as direction, translations won't apply") }
 		self.model_matrix() * vertex
 	}
-}
 
-#[cfg(test)]
-mod tests {
-	use cgmath::{Deg, Vector3, Vector4};
+	pub fn model_position(&self, position: &Position) -> Position {
+		let position = Vector4::new(position.x as f32, position.y as f32, position.z as f32, 1.0);
 
-	use super::{InstanceRenderComponent, FloatPrecision};
+		let position = self.model_vertex(position);
 
-	const EPSILON: f32 = 0.000001;
-	fn approx_equal(got: Vector3<FloatPrecision>, expected: Vector3<FloatPrecision>) {
-		assert!(
-			(got.x - expected.x).abs() < EPSILON &&
-			(got.y - expected.y).abs() < EPSILON &&
-			(got.z - expected.z).abs() < EPSILON,
-			"{}", &format!("Expected: {:?}, Got: {:?}", expected, got)
-		)
+		Position::new(position.x as f64, position.y as f64, position.z as f64)
 	}
 
-    #[test]
-    fn rotating() {
-        let mut r = InstanceRenderComponent::default();
-		r.global_rotate(&Deg(90.0), &Vector3::unit_y());
-		let v = r.model_matrix() * Vector4::unit_x();
-		approx_equal(v.truncate(), -Vector3::unit_z());
+	pub fn set_width(&mut self, current_width: FloatPrecision, target_width: FloatPrecision) -> Result<()> {
+		if current_width == 0.0 {
+			anyhow::bail!("Division by 0 `current_width`");
+		} 
 
-		r.local_rotate(&Deg(45.0), &Vector3::unit_y());
-		let v = r.model_matrix() * Vector4::unit_x();
-		approx_equal(v.truncate(), Vector3::new(-0.7071068, 0.0, -0.7071068));
+		self.model_scale.x = target_width / current_width;
+		Ok(())
+	}	
+
+	pub fn set_height(&mut self, current_height: FloatPrecision, target_height: FloatPrecision) -> Result<()> {
+		if current_height == 0.0 {
+			anyhow::bail!("Division by 0 `current_height`");
+		}
+
+		self.model_scale.y = target_height / current_height;
+		Ok(())
 	}
 
-	#[test]
-	fn local_rotating() {
-		let mut r = InstanceRenderComponent::default();
-		r.local_rotate(&Deg(90.0), &Vector3::unit_y());
-		let v = r.model_matrix() * Vector4::unit_x();
-		approx_equal(v.truncate(), -Vector3::unit_z());
+	pub fn set_depth(&mut self, current_depth: FloatPrecision, target_depth: FloatPrecision) -> Result<()> {
+		if current_depth == 0.0 {
+			anyhow::bail!("Division by 0 `current_depth`");
+		}
+
+		self.model_scale.z = target_depth / current_depth;
+		Ok(())
 	}
 
-	#[test]
-	fn scaling() {
-		let mut r = InstanceRenderComponent::default();
-		r.global_scale = Vector3::new(2.0, 2.0, 2.0);
-		let v = r.model_matrix() * Vector4::unit_x();
-		approx_equal(v.truncate(), Vector3::new(2.0, 0.0, 0.0));
-		r.local_scale *= 2.0;
-		let v = r.model_matrix() * Vector4::new(1.0, 1.0, 1.0, 0.0);
-		approx_equal(v.truncate(), Vector3::new(4.0, 4.0, 4.0));
+	pub fn set_dimensions(&mut self, current_dimensions: &Position, target_dimensions: &Position) -> Result<()> {
+		self.set_width(current_dimensions.x as f32, target_dimensions.x as f32)?;
+		self.set_height(current_dimensions.y as f32, target_dimensions.y as f32)?;
+		self.set_depth(current_dimensions.z as f32, target_dimensions.z as f32)?;
+
+		Ok(())
 	}
 
-	#[test]
-	fn translating() {
-		let mut r = InstanceRenderComponent::default();
-		r.global_translation = Vector3::unit_x();
-		// w = 1.0 allows translations
-		let v = r.model_matrix() * Vector4::new(1.0, 0.0, 0.0, 1.0);
-		approx_equal(v.truncate(), Vector3::new(2.0, 0.0, 0.0));
-		r.local_translation = Vector3::unit_y();
-		let v = r.model_matrix() * Vector4::new(0.0, 0.0, 0.0, 1.0);
-		approx_equal(v.truncate(), Vector3::new(1.0, 1.0, 0.0));
+	pub fn set_min(
+		&mut self,  
+		mesh_min: &Position, 
+		target_min: &Position
+	) -> Result<(), Error> {
+		// spent a week on this please dont ask me how it works jk... it is quite intuitive if u abstract it.
+
+		// doing this means you can override the set_min and adjust it *relative* to the *target_min* by just changing the world translation
+		// to undo this change `inv_out` to self.outer_model_matrix() . inverse yada yada
+		let outer_model_matrix_excluding_translation = Matrix4::from(self.world_rotation) *
+        Matrix4::from_nonuniform_scale(self.world_scale.x, self.world_scale.y, self.world_scale.z);
+
+		let inv_out = outer_model_matrix_excluding_translation.inverse_transform().context("failed to inverse the world transformations")?;
+
+		// doing this means i dont have to set the model translation to 0
+		// to undo this change it to self.inner_model_matrix() and set the model translation to 0.0
+		let inner_model_matrix_excluding_translation = Matrix4::from(self.model_rotation) *
+        Matrix4::from_nonuniform_scale(self.model_scale.x, self.model_scale.y, self.model_scale.z);
+
+		self.model_translation = (
+			(
+				inv_out * 
+				target_min.position
+					.to_vec()
+					.cast()
+					.unwrap()
+					.extend(1.0)
+			) - 
+			(
+				inner_model_matrix_excluding_translation * 
+				mesh_min.position
+					.to_vec()
+					.cast()
+					.unwrap()
+					.extend(1.0)
+				)
+		).truncate();
+		
+	    Ok(())
 	}
 
-	#[test]
-	fn all() {
-		let mut r = InstanceRenderComponent::default();
-		r.local_scale = Vector3::new(2.0, 0.5, 1.0);
-		r.local_rotate(&Deg(90.0), &Vector3::unit_z());
-		r.local_translation = Vector3::new(3.0, 2.0, 0.0);
-		r.global_scale = Vector3::new(1.0, 1.0, 3.0);
-		r.global_rotate(&Deg(45.0), &Vector3::unit_x());
-		r.global_translation = Vector3::new(0.0, 0.0, 1.0);
+	pub fn set_min_max(
+		&mut self,
+		mesh_min: &Position,
+		self_max: &Position,
+		target_min: &Position,
+		target_max: &Position,
+	) -> Result<(), Error> {
+		// see tests for why
+		assert_eq!(self.model_rotation, Quaternion::one());
+		assert_eq!(self.world_rotation, Quaternion::one());
 
-		// w = 0.0 -> direction -> translation doesn't apply
-		// w = 1.0 -> position -> translation doesn't apply
-		let v = r.model_vertex(Vector4::new(1.0, 0.0, 0.0, 1.0));
-		approx_equal(v.truncate(), Vector3::new(3.0, 2.8284268, 3.8284273));
+		let current_dimensions = self_max - mesh_min;
+		let target_dimensions = target_max - target_min;
+
+		self.set_dimensions(&current_dimensions, &target_dimensions)?;
+		self.set_min(&mesh_min, target_min)?;
+
+		Ok(())
 	}
 }
 

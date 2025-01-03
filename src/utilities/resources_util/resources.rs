@@ -263,7 +263,7 @@ mod tests {
     use super::Resources;
 
     fn resources() -> Resources {
-        Resources::new("src/utilities/resources/tests/objs", "src/utilities/resources/tests/materials")
+        Resources::new("src/utilities/resources_util/tests/objs", "src/utilities/resources_util/tests/materials")
     }
 
     #[test]

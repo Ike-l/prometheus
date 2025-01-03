@@ -90,4 +90,16 @@ impl AABB {
             self.max.add(position),
         )
     }
+
+    pub fn width(&self) -> f64 {
+        (self.max.x - self.min.x).abs()
+    }
+
+    pub fn height(&self) -> f64 {
+        (self.max.y - self.min.y).abs()
+    }
+
+    pub fn depth(&self) -> f64 {
+        (self.max.z - self.min.z).abs()
+    }
 }

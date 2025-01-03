@@ -1,5 +1,6 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ops::Sub};
 
+use cgmath::Point3;
 use small_derive_deref::{
     Deref, DerefMut
 };
@@ -67,6 +68,21 @@ impl PartialOrd for Position {
         }
         x_cmp
     }
+}
+
+impl Sub for &Position {
+    type Output = Position;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::Output {
+            position: Point3::new(
+                self.x - rhs.x, 
+                self.y - rhs.y, 
+                self.z - rhs.z
+            )           
+        }
+    }
+    
 }
 
 #[cfg(test)]
