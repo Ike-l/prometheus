@@ -2,9 +2,7 @@ use std::time::{
     Duration, Instant
 };
 
-use super::{
-    Res, ResMut
-};
+use super::ResMut;
 
 #[derive(Debug)]
 pub struct Time {
@@ -35,6 +33,3 @@ pub fn update_time(mut time: ResMut<Time>) {
     time.now += dt;
 }
 
-pub fn fps_counter(time: Res<Time>) {
-    println!("FPS: {:?}", time.fps());
-}

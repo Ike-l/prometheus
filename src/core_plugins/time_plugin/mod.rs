@@ -1,14 +1,14 @@
 mod tick;
 mod time;
 mod accumulators;
+mod fps_counter;
 
 pub mod prelude {
     pub use super::{
         UPDATE_TICK, UPDATE_TIME,
         tick::Tick, 
-        time::{
-            Time, fps_counter
-        },
+        time::Time,
+        fps_counter::create_fps_counter,
         accumulators::{
             Accumulator, Accumulators
         }
@@ -26,10 +26,10 @@ impl PluginTrait for TimePlugin {
     fn build(&self, app: &mut crate::app::App) {
         app.add_system(UPDATE_TIME, time::update_time);
         app.add_system(UPDATE_TICK, tick::update_tick_count);
+
         app.add_resource(time::Time::default());
         app.add_resource(tick::Tick::default());
-        app.add_resource(accumulators::Accumulators::default());
-
+        app.add_resource(accumulators::Accumulators::default());        
     }
     fn id(&self) -> PluginId {
         PluginId("prometheus_TimePlugin")
