@@ -1,9 +1,9 @@
 use anyhow::{
-	Context, Error, Result
+	Error, Result
 };
 
 use crate::prelude::{
-	acceleration_structures_plugin::prelude::AABB, label_plugin::prelude::LabelComponent, promethius_std::prelude::Position
+	label_plugin::prelude::LabelComponent, promethius_std::prelude::Position
 };
 
 use super::{
@@ -12,7 +12,7 @@ use super::{
 
 use anyhow::Ok;
 use cgmath::{
-    Array, Deg, InnerSpace, Matrix4, One, Quaternion, Rotation3, Transform, Vector3, Vector4
+    Array, Deg, EuclideanSpace, InnerSpace, Matrix4, One, Quaternion, Rotation3, Transform, Vector3, Vector4
 };
 
 use log::warn;
@@ -101,6 +101,14 @@ impl InstanceRenderComponent {
 		self.model_matrix() * vertex
 	}
 
+	pub fn model_position(&self, position: &Position) -> Position {
+		let position = Vector4::new(position.x as f32, position.y as f32, position.z as f32, 1.0);
+
+		let position = self.model_vertex(position);
+
+		Position::new(position.x as f64, position.y as f64, position.z as f64)
+	}
+
 	pub fn set_width(&mut self, current_width: FloatPrecision, target_width: FloatPrecision) -> Result<()> {
 		if current_width == 0.0 {
 			anyhow::bail!("Division by 0 `current_width`");
@@ -129,70 +137,51 @@ impl InstanceRenderComponent {
 	}
 
 	pub fn set_min(
-		&mut self, 
-		other_render: &Self, 
+		&mut self,  
 		self_min: &Position, 
 		target_min: &Position
 	) -> Result<(), Error> {
-		self.model_rotation = other_render.model_rotation;
-		self.world_rotation = other_render.world_rotation;
+		// spent a week on this please dont ask me how it works jk... it is quite intuitive if u abstract it.
+
+		// could just set it to 0 OR exclude it from the calculation where i use outer_model_matrix but this is easier
+		assert_eq!(self.world_translation, Vector3::from_value(0.0));
+
+		// fine to set to 0 because it is overrided anyways
 		self.model_translation = Vector3::from_value(0.0);
-
-		let target_min = Vector3::new(
-			target_min.x as FloatPrecision, 
-			target_min.y as FloatPrecision, 
-			target_min.z as FloatPrecision
-		);
-
-		let self_min = Vector3::new(
-			self_min.x as FloatPrecision,
-			self_min.y as FloatPrecision,
-			self_min.z as FloatPrecision
-		);
-
-		self.model_translation = self
-			.inner_model_matrix()
-			.inverse_transform_vector(
-				other_render
+		self.model_translation = (
+			(
+				self
 					.outer_model_matrix()
-					.inverse_transform_vector(target_min)
-					.context("Cannot inverse-transform `target_min` with `other outer model`")?
+					.inverse_transform()
+					.unwrap() * 
+				target_min.position
+					.to_vec()
+					.cast::<f32>()
+					.unwrap()
+					.extend(1.0)
+			) - 
+			(
+				self
+					.inner_model_matrix() * 
+				self_min.position
+					.to_vec()
+					.cast::<f32>()
+					.unwrap()
+					.extend(1.0)
 				)
-				.context("Cannot inverse-transform (previous step) with `self inner model`")?
-			- self_min;
-
-		Ok(())
-	}
+		).truncate();
+		
+	    Ok(())
+}
 
 	pub fn set_min_max(
 		&mut self,
-		other_render: &Self,
-		current_aabb: &AABB,
-		target_min: &Position,
-		target_max: &Position,
+		_self_min: &Position,
+		_self_max: &Position,
+		_target_min: &Position,
+		_target_max: &Position,
 	) -> Result<(), Error> {
-		self.model_rotation = other_render.model_rotation;
-		self.world_rotation = other_render.world_rotation;
-
-		let target_dimensions = Position::new(
-			target_max.x - target_min.x, 
-			target_max.y - target_min.y, 
-			target_max.z - target_min.z,
-		);
-
-		let current_min = Position::new(
-			current_aabb.min.x * target_dimensions.x / current_aabb.width() , 
-			current_aabb.min.y * target_dimensions.y / current_aabb.height(), 
-			current_aabb.min.z * target_dimensions.z / current_aabb.depth()
-		);
-
-		self.set_min(other_render, &current_min, &target_min).unwrap();
-
-		self.set_width(current_aabb.width() as f32, target_dimensions.x as f32).unwrap();
-		self.set_height(current_aabb.height() as f32, target_dimensions.y as f32).unwrap();
-		self.set_depth(current_aabb.depth() as f32, target_dimensions.z as f32).unwrap();
-
-		Ok(())
+		todo!()
 	}
 }
 

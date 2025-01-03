@@ -89,12 +89,23 @@ fn get_aabb() -> AABB {
 	AABB::new(old_min, old_max)
 }
 
+fn get_target_aabb() -> AABB {
+	let old_min = Position::new(-5.0, -5.0, -5.0);
+	let old_max = Position::new(5.0, 5.0, 5.0);
+
+	AABB::new(old_min, old_max)
+}
+
 fn get_aabb_as_cgmath() -> (Point3<FloatPrecision>, Point3<FloatPrecision>) {
 	(position_to_point(get_aabb().min), position_to_point(get_aabb().max))
 }
 
 fn position_to_point(a: Position) -> Point3<FloatPrecision> {
 	Point3::new(a.x as FloatPrecision, a.y as FloatPrecision, a.z as FloatPrecision)
+}
+
+fn point_to_vector(a: Point3<FloatPrecision>) -> Vector3<FloatPrecision> {
+	Vector3::new(a.x, a.y, a.z)
 }
 
 #[test]
@@ -153,198 +164,93 @@ fn set_all() {
 	assert_eq!(new_max.z - new_min.z, -0.001321);
 }
 
-#[test]
-fn set_min_basic() {
-	let mut instance = InstanceRenderComponent::default();
-	let other_render = &InstanceRenderComponent::default();
-
-	instance.set_min(other_render, &get_aabb().min, &Position::new(3.0, 6.0, 8.0)).unwrap();
-
-	let new = get_aabb_as_cgmath();
-
-	let new_min = instance.model_matrix().transform_point(new.0);
-
-	assert_eq!(new_min.x, 3.0);
-	assert_eq!(new_min.y, 6.0);
-	assert_eq!(new_min.z, 8.0);
-}
-
-#[test]
-fn set_min_basic2() {
-	let mut instance = InstanceRenderComponent::default();
-	let other_render = &InstanceRenderComponent::default();
-
+fn test_min(
+	mut instance: InstanceRenderComponent,
+	self_min: Position,
+	target_min: Position,
+) {
 	instance.set_min(
-		other_render, 
-		&Position::new(-1.0, -1.0, -1.0), 
-		&Position::new(10.0, 20.0, 30.0)
+		&self_min, 
+		&target_min
 	).unwrap();
 
-	let new = get_aabb_as_cgmath();
 
-	let new_min = instance.model_matrix().transform_point(new.0);
-
-	assert_eq!(new_min.x, 10.0);
-	assert_eq!(new_min.y, 20.0);
-	assert_eq!(new_min.z, 30.0);
-}
-
-#[test]
-fn set_min_rotation() {
-	let mut instance = InstanceRenderComponent::default();
-	let mut other_render = InstanceRenderComponent::default();
-	
-	other_render.world_rotate(&Deg(150.0), &Vector3::unit_x());
-
-	instance.set_min(&other_render, &get_aabb().min, &Position::new(3.0, 4.0, 5.0)).unwrap();
-
-	let new = get_aabb_as_cgmath();
-
-	let new_min = instance.model_matrix().transform_point(new.0);
-
-	assert!((new_min.x - 3.0).abs() < EPSILON);
-	assert!((new_min.y - 4.0).abs() < EPSILON);
-	assert!((new_min.z - 5.0).abs() < EPSILON);
-}
-
-#[test]
-fn set_min_rotation_scale() {
-	let mut instance = InstanceRenderComponent::default();
-	let mut other_render = InstanceRenderComponent::default();
-	
-	other_render.world_rotate(&Deg(150.0), &Vector3::unit_x());
-	other_render.set_width(get_aabb().width() as f32, 5.0).unwrap();
-	other_render.set_height(get_aabb().height() as f32, 15.0).unwrap();
-
-	instance.set_min(&other_render, &get_aabb().min, &Position::new(3.0, 4.0, 5.0)).unwrap();
-
-	let new = get_aabb_as_cgmath();
-
-	let new_min = instance.model_matrix().transform_point(new.0);
-
-	assert!((new_min.x - 3.0).abs() < EPSILON);
-	assert!((new_min.y - 4.0).abs() < EPSILON);
-	assert!((new_min.z - 5.0).abs() < EPSILON);
-}
-
-#[test]
-fn set_min_playground() {
-	let mut instance = InstanceRenderComponent::default();
-	let world_translation = Vector3::unit_z();
-	instance.world_translation = world_translation;
-
-	let mut other_render = InstanceRenderComponent::default();
-	
-	other_render.world_rotate(&Deg(150.0), &Vector3::unit_x());
-	other_render.set_width(get_aabb().width() as f32, 5.0).unwrap();
-	other_render.set_height(get_aabb().height() as f32, 15.0).unwrap();
-	other_render.world_translation = Vector3::unit_y();
-
-	let min = other_render.model_matrix().transform_point(Point3::new(3.0, 4.0, 5.0));
-
-	let target_min = Position::new(min.x as f64, min.y as f64, min.z as f64);
-
-	instance.set_min(&other_render, &get_aabb().min, &target_min).unwrap();
-
-	let new = get_aabb_as_cgmath();
-
-	let new_min = instance.model_matrix().transform_point(new.0);
-
-	assert!(((new_min.x - world_translation.x) - (target_min.x as f32)).abs() < EPSILON);
-	assert!(((new_min.y - world_translation.y) - (target_min.y as f32)).abs() < EPSILON);
-	assert!(((new_min.z - world_translation.z) - (target_min.z as f32)).abs() < EPSILON);
-}
-
-/*#[test]
-fn set_min_max_basic() {
-	let mut instance = InstanceRenderComponent::default();
-
-	let mut other_render = InstanceRenderComponent::default();
-	//other_render.model_rotate(&Deg(45.0), &Vector3::unit_y());
-	//other_render.model_translation.y += 1.0;
-	//other_render.set_width(get_aabb().width() as f32, get_aabb().width() as f32 * 1.75).unwrap();
-	//other_render.set_height(get_aabb().height() as f32, get_aabb().height() as f32 * 1.75 * 2.0).unwrap();
-	//other_render.set_depth(get_aabb().depth() as f32, get_aabb().depth() as f32 * 1.75 * 3.0).unwrap();
-	//other_render.world_rotate(&Deg(90.0), &Vector3::unit_x());
-	//other_render.world_translation.z += 1.0;
-	//other_render.world_scale.x *= 2.0
-
-	let (target_min_x, target_min_y, target_min_z) = (2.0, 4.0, 8.0);
-	let (target_width, target_height, target_depth) = (1.0, 3.0, 9.0);
-
-	let target_min = Position::new(
-		target_min_x, 
-		target_min_y, 
-		target_min_z,
-	);
-
-	let target_max = Position::new(
-		target_min_x + target_width, 
-		target_min_y + target_height, 
-		target_min_z + target_depth,
-	);
-
-
-	instance.set_min_max(&other_render, &get_aabb(), &target_min, &target_max).unwrap();
-
-	let (mut new_min, mut new_max) = get_aabb_as_cgmath();
-
-	println!("new_min: {new_min:?}, new_max: {new_max:?}");
-
-	new_min = instance.model_matrix().transform_point(new_min);
-	new_max = instance.model_matrix().transform_point(new_max);
-
-	println!("new_min: {new_min:?}, new_max: {new_max:?}");
+	let new_min = instance.model_position(&self_min);
 
 	approx_equal(
-		Vector3::new(new_min.x, new_min.y, new_min.z), 
-		Vector3::new(target_min.x as f32, target_min.y as f32, target_min.z as f32)
+		point_to_vector(
+			position_to_point(new_min)
+		), 
+		point_to_vector(
+			position_to_point(target_min)
+		)
 	);
-
-	approx_equal(
-		Vector3::new(new_max.x, new_max.y, new_max.z), 
-		Vector3::new(target_max.x as f32, target_max.y as f32, target_max.z as f32)
-	);
-}*/
-
-#[test]
-fn set_min_max_basic() {
-	let mut instance = InstanceRenderComponent::default();
-	let other_render = InstanceRenderComponent::default();
-
-	let target_min = Position::new(10.0, 20.0, 30.0);
-	let target_max = Position::new(20.0, 40.0, 80.0);
-
-	instance.set_min_max(&other_render, &get_aabb(), &target_min, &target_max).unwrap();
-
-	let should_be_target_min = instance.model_matrix().transform_point(get_aabb_as_cgmath().0);
-	let should_be_target_max = instance.model_matrix().transform_point(get_aabb_as_cgmath().1);
-
-	approx_equal(point_to_vector(should_be_target_max), point_to_vector(target_max.position.cast::<FloatPrecision>().unwrap()));
-	approx_equal(point_to_vector(should_be_target_min), point_to_vector(target_min.position.cast::<FloatPrecision>().unwrap()));
 }
 
 #[test]
-fn set_min_max_with_dimensions() {
-	let mut instance = InstanceRenderComponent::default();
-	let mut other_render = InstanceRenderComponent::default();
+fn set_min() {
+	test_min(
+		InstanceRenderComponent::default(), 
+		get_aabb().min,
+		Position::new(3.0, 6.0, 8.0)
+	);
+}
+
+#[test]
+fn set_min_dims() {
+	let mut i = InstanceRenderComponent::default();
+	let current_aabb = get_aabb();
+	let target_aabb = get_target_aabb();
+
+	i.set_width(current_aabb.width() as f32, target_aabb.width() as f32).unwrap();
+	i.set_height(current_aabb.height() as f32, target_aabb.height() as f32).unwrap();
+	i.set_depth(current_aabb.depth() as f32, target_aabb.depth() as f32).unwrap();
+
+	test_min(
+		i,
+		current_aabb.min, 
+		Position::new(3.0, 6.0, 8.0)
+	);
+}
+
+#[test]
+fn set_min_model_rotations() {
+	let mut i = InstanceRenderComponent::default();
+	let current_aabb = get_aabb();
+
+	i.model_rotate(&Deg(123.0), &Vector3::unit_y());
+	i.world_rotate(&Deg(321.0), &Vector3::unit_z());
+
+	test_min(
+		i,
+		current_aabb.min, 
+		Position::new(3.0, 6.0, 8.0)
+	);
+}
+
+// set min but instance has:
+/*
+	0. None
+	1. a custom width and height
+	2. a custom model rotation
+	3. a custom world rotation
+	4. a custom world translation
+
+	5. 1. + 2.
+	6. 1. + 3.
+	7. 1. + 4.
+
+	8. 2. + 3.
+	9. 2. + 4.
+
+	10. 3. + 4.
+
+	11. 1. + 2. + 3.
+	12. 1. + 2. + 4.
+
+	13. 1. + 3. + 4.
 	
-	other_render.set_width(get_aabb().width() as f32, 45.0).unwrap();
-	other_render.set_height(get_aabb().height() as f32, 0.032).unwrap();
-	other_render.set_depth(get_aabb().depth() as f32, 3.0).unwrap();
-
-	let target_min = Position::new(10.0, 20.0, 30.0);
-	let target_max = Position::new(72.1, 40.0321, 0.23);
-
-	instance.set_min_max(&other_render, &get_aabb(), &target_min, &target_max).unwrap();
-
-	let expected_target_min = instance.model_matrix().transform_point(get_aabb_as_cgmath().0);
-	let expected_target_max = instance.model_matrix().transform_point(get_aabb_as_cgmath().1);
-
-	approx_equal(point_to_vector(expected_target_max), point_to_vector(target_max.position.cast::<FloatPrecision>().unwrap()));
-	approx_equal(point_to_vector(expected_target_min), point_to_vector(target_min.position.cast::<FloatPrecision>().unwrap()));
-}
-
-fn point_to_vector(a: Point3<FloatPrecision>) -> Vector3<FloatPrecision> {
-	Vector3::new(a.x, a.y, a.z)
-}
+	14. 2. + 3. + 4.
+	
+	15. 1. + 2. + 3. + 4.
+*/
