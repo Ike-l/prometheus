@@ -2,9 +2,7 @@
 use std::time::Duration;
 
 use crate::prelude::{
-    time_plugin::prelude::{
-        Tick, Time
-    }, 
+    time_plugin::prelude::Time, 
     ui_plugin::prelude::UIComponent, 
     MutWorld, Res
 };
@@ -12,7 +10,7 @@ use crate::prelude::{
 #[derive(Debug)]
 pub enum Delay {
     Time(Duration),
-    Tick(Tick)
+    Tick(u64)
 }
 
 #[derive(Debug)]
@@ -32,10 +30,10 @@ impl DelayedUIComponent {
     }
 
     pub fn progress(&self) -> f64 {
-        match &self.delay_progress {
+        match self.delay_progress {
             Delay::Tick(progress) => {
-                match &self.delay_target {
-                    Delay::Tick(target) => progress.0 as f64 / target.0 as f64,
+                match self.delay_target {
+                    Delay::Tick(target) => progress as f64 / target as f64,
                     _ => unreachable!()
                 }
             },
@@ -55,7 +53,7 @@ impl DelayedUIComponent {
     fn origin_delay(delay_target: &Delay) -> Delay {
         match delay_target {
             Delay::Time(_) => Delay::Time(Duration::from_secs(0)),
-            Delay::Tick(_) => Delay::Tick(Tick(0)),
+            Delay::Tick(_) => Delay::Tick(0),
         }
     }
 }
@@ -66,7 +64,7 @@ pub fn update_delayed_ui(world: MutWorld, time: Res<Time>) {
         // when the first event is added it starts progress
         if ui.event_buffer.len() > 0 {
             match &mut delay.delay_progress {
-                Delay::Tick(t) => t.0 += 1,
+                Delay::Tick(t) => *t += 1,
                 Delay::Time(t) => *t += time.dt,
             }
     

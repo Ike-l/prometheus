@@ -161,7 +161,8 @@ pub fn create_states(e: Res<&winit::event_loop::ActiveEventLoop>, mut states: Re
 
     let label = "Main";
     let attributes = Window::default_attributes()
-        .with_title(label);
+        .with_title(label)
+        .with_inner_size(winit::dpi::Size::Physical(winit::dpi::PhysicalSize::new(800, 800)));
     let window = event_loop.create_window(attributes).unwrap();
 
     let state = pollster::block_on(
@@ -174,7 +175,11 @@ pub fn create_states(e: Res<&winit::event_loop::ActiveEventLoop>, mut states: Re
 pub fn render_system(object_registry: ResMut<ObjectRegistry>, state: Res<Vec<State>>, world: RefWorld) {
     let state = state.first().unwrap();
 
-    let output = state.surface.get_current_texture().unwrap();
+    let output = match state.surface.get_current_texture() {
+        Ok(o) => o,
+        Err(_) => return
+    };
+
     let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
     let mut encoder = state.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
         label: Some(&format!("{}, render_encoder", state.label))

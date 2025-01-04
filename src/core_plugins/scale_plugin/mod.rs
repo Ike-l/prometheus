@@ -6,7 +6,7 @@ pub struct ScalePlugin;
 
 impl PluginTrait for ScalePlugin {
     fn build(&self, _app: &mut App) {
-        todo!()
+        //todo!()
     }
 
     fn id(&self) -> PluginId {

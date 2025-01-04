@@ -200,15 +200,16 @@ impl InstanceRenderComponent {
 	pub fn set_min_max(
 		&mut self,
 		mesh_min: &Position,
-		self_max: &Position,
+		mesh_max: &Position,
 		target_min: &Position,
 		target_max: &Position,
 	) -> Result<(), Error> {
 		// see tests for why
-		assert_eq!(self.model_rotation, Quaternion::one());
-		assert_eq!(self.world_rotation, Quaternion::one());
+		assert_eq!(self.model_rotation, Quaternion::one(), "having rotations and `set_min_max` is undefined");
+		assert_eq!(self.world_rotation, Quaternion::one(), "having rotations and `set_min_max` is undefined"); 
+		assert_eq!(self.world_scale, Vector3::from_value(1.0), "having a world scale and `set_min_max` is undefined");
 
-		let current_dimensions = self_max - mesh_min;
+		let current_dimensions = mesh_max - mesh_min;
 		let target_dimensions = target_max - target_min;
 
 		self.set_dimensions(&current_dimensions, &target_dimensions)?;
