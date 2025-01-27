@@ -1,1 +1,3 @@
+*.lock
 /target
+event_driver/target

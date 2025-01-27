@@ -1,0 +1,21 @@
+Log all I/O
+Log all unique instanciation for `App`
+Add way to grep what phase takes 1. Reference, 2. Mutable Reference
+Add ways of using each standalone system(s)
+Techniques: 
+    Types: 
+        *Private for State
+        *Public for Data
+    Parameters: 
+        *Ownership for consume
+        *Reference for read/ prevent future code in scope from modifying (if return something)
+        *Mutable for modification
+        *Cow for clone / read while allowing future code to modify
+
+Remove abstractions over cgmath, use prommath
+Rethink all getters
+Remove ReadOnly crate
+qualify as much as possible
+Rethink derive on all types
+handle all panics
+Use as generic as possible while it still makes sense
