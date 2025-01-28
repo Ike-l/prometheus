@@ -2,9 +2,9 @@ use std::any::type_name;
 
 use event::{DeviceEventBus, WindowEventBus};
 use hecs::{CommandBuffer, World};
-use winit::{application::ApplicationHandler, event::WindowEvent, event_loop::ActiveEventLoop};
+use winit::{application::ApplicationHandler, event::{DeviceEvent, DeviceId, StartCause, WindowEvent}, event_loop::ActiveEventLoop, window::WindowId};
 
-use crate::{prelude::Event, prom_core::core_plugin::loop_start};
+use crate::prelude::Event;
 
 use super::{scheduler::{system::{IntoSystem, System}, Scheduler}, unity::plugin::Plugin};
 
@@ -45,10 +45,10 @@ impl App {
 }
 
 impl ApplicationHandler for App {
-    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         log::info!("Resumed App");
         self.phase_offset = 0.0;
-        self.insert_system(Scheduler::END-f64::MIN_POSITIVE, loop_start);
+        //self.insert_system(Scheduler::END-f64::MIN_POSITIVE, loop_start);
 
         let event_loop_ptr: *const ActiveEventLoop = event_loop;
         let app_ptr: *mut App = self;
@@ -67,31 +67,26 @@ impl ApplicationHandler for App {
         self.scheduler.register_event::<WindowEventBus>();
         self.scheduler.register_event::<DeviceEventBus>();
 
-        log::info!("Starting scheduler");
+        log::info!("Scheduler running START");
 
         self.scheduler.run(Scheduler::START, Scheduler::TICK);
 
         self.scheduler.clear_resource::<&ActiveEventLoop>();
         self.scheduler.clear_resource::<&mut App>();
         log::info!("Cleared resources: &ActiveEventLoop, &mut App");
-
-        log::info!("Starting first tick");
-        self.scheduler.run(Scheduler::TICK, Scheduler::END);
     }
 
     fn window_event(
         &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-        window_id: winit::window::WindowId,
-        event: winit::event::WindowEvent,
+        event_loop: &ActiveEventLoop,
+        window_id: WindowId,
+        event: WindowEvent,
     ) {
         log::info!("Received window event: {event:?}");
 
-        let redraw = event == WindowEvent::RedrawRequested;
-
         match event {
             WindowEvent::CloseRequested => {
-                log::info!("Exiting App");
+                log::info!("Scheduler running END");
                 self.scheduler.run(Scheduler::END, Scheduler::EXIT);
                 event_loop.exit();
             },
@@ -106,21 +101,16 @@ impl ApplicationHandler for App {
                 }
             }
         }
-
-        if redraw {
-            log::info!("Running Scheduler tick");
-            self.scheduler.run(Scheduler::TICK, Scheduler::END);
-        }
     }
-
+    
     fn device_event(
-            &mut self,
-            _event_loop: &ActiveEventLoop,
-            device_id: winit::event::DeviceId,
-            event: winit::event::DeviceEvent,
-        ) {
+        &mut self,
+        _event_loop: &ActiveEventLoop,
+        device_id: DeviceId,
+        event: DeviceEvent,
+    ) {
         log::info!("Received device event: {event:?}");
-
+        
         match self.scheduler.retrieve_event_writer::<DeviceEventBus>() {
             Some(mut bus) => {
                 bus.send(DeviceEventBus::new(event, device_id));
@@ -128,6 +118,13 @@ impl ApplicationHandler for App {
             None => {
                 log::warn!("Failed to retrieve event writer of DeviceEventBus")
             }
+        }
+    }
+    
+    fn new_events(&mut self, _event_loop: &ActiveEventLoop, cause: StartCause) {
+        if cause == StartCause::Poll {
+            log::info!("Scheduler running TICK");
+            self.scheduler.run(Scheduler::TICK, Scheduler::END);
         }
     }
 }
