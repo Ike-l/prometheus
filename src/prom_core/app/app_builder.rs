@@ -3,15 +3,25 @@ use winit::{error::EventLoopError, event_loop::{ControlFlow, EventLoop}};
 
 use super::App;
 
-#[derive(Debug, Default, Deref, DerefMut)]
+#[derive(Debug, Deref, DerefMut)]
 pub struct AppBuilder {
     app: App,
 }
 
+impl Default for AppBuilder {
+    fn default() -> Self {
+        env_logger::init();
+        log::info!("Building App");
+
+        Self {
+            app: App::default()
+        }
+    }
+}
+
 impl AppBuilder {
     pub fn run(mut self) -> Result<(), EventLoopError> {
-        env_logger::init();
-        log::info!("Building app");
+        log::info!("Running app");
 
         let event_loop = EventLoop::new()?;
 

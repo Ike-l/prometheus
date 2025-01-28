@@ -39,6 +39,7 @@
 )]
 
 pub mod prom_core;
+pub mod prom_plugins;
 
 pub mod prelude {
     pub use super::prom_core::scheduler::injection_types::{
@@ -54,4 +55,19 @@ pub mod prelude {
     };
 
     pub use event_driver::EventDriver as Event;
+
+    pub use super::prom_core::unity::{
+        plugin::Plugin, 
+        registry::{
+            identity::Identity, 
+            iterable_registry::{
+                IterableRegistry, OwnedIterableRegistry
+            }, 
+            lookup_registry::{
+                LookupRegistry, OwnedLookupRegistry
+            }
+        }
+    };
+
+    pub use super::prom_core::app::{App, app_builder::AppBuilder};
 }

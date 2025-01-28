@@ -24,6 +24,10 @@ impl App {
         plugin.build(self);
     }
 
+    pub fn insert_plugins<T>(&mut self, plugins: T) where T: Iterator<Item = Box<dyn Plugin>> {
+        plugins.for_each(|plugin| self.insert_plugin(plugin));
+    }
+
     pub fn insert_system<T, I, S>(&mut self, phase: f64, system: T) 
     where 
         T: IntoSystem<I, System = S>,
@@ -35,12 +39,27 @@ impl App {
 
     pub fn register_event<T: Event>(&mut self) {
         log::info!("Registering event: {:?}", type_name::<T>());
-        self.scheduler.register_event::<T>();
+        if self.scheduler.register_event::<T>() {
+            log::warn!("Replaced event: {:?}", type_name::<T>());
+        }
     }
 
     pub fn insert_resource<T: 'static>(&mut self, resource: T) {
         log::info!("Inserting resoure: {:?}", type_name::<T>());
-        self.scheduler.insert_resource(resource);
+        if self.scheduler.insert_resource(resource) {
+            log::warn!("Replaced resource: {:?}", type_name::<T>());
+        }
+    }
+
+    pub fn insert_default_resource<T: 'static + Default>(&mut self) {
+        self.insert_resource(T::default());
+    }
+
+    pub fn clear_resource<T: 'static>(&mut self) {
+        log::info!("Clearing resource: {:?}", type_name::<T>());
+        if !self.scheduler.clear_resource::<T>() {
+            log::warn!("Failed clearing resource: {:?}. Resource did not exist", type_name::<T>());
+        }
     }
 }
 
@@ -56,16 +75,15 @@ impl ApplicationHandler for App {
             let event_loop_ref: &ActiveEventLoop = &*event_loop_ptr;
             let app_ref: &mut App = &mut *app_ptr;
             // Safe since access is tracked and is sequential
-            self.scheduler.insert_resource(event_loop_ref);
-            self.scheduler.insert_resource(app_ref);
+            self.insert_resource(event_loop_ref);
+            self.insert_resource(app_ref);
         }
-        log::info!("Inserted resources: &ActiveEventLoop, &mut App");
 
-        self.scheduler.insert_resource(World::new());
-        self.scheduler.insert_resource(CommandBuffer::new());
+        self.insert_resource(World::new());
+        self.insert_resource(CommandBuffer::new());
 
-        self.scheduler.register_event::<WindowEventBus>();
-        self.scheduler.register_event::<DeviceEventBus>();
+        self.register_event::<WindowEventBus>();
+        self.register_event::<DeviceEventBus>();
 
         log::info!("Scheduler running START");
 
@@ -73,7 +91,8 @@ impl ApplicationHandler for App {
 
         self.scheduler.clear_resource::<&ActiveEventLoop>();
         self.scheduler.clear_resource::<&mut App>();
-        log::info!("Cleared resources: &ActiveEventLoop, &mut App");
+        log::info!("Cleared resource: &ActiveEventLoop");
+        log::info!("Cleared resource: &mut App");
     }
 
     fn window_event(

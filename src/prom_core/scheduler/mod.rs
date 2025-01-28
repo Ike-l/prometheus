@@ -83,14 +83,14 @@ impl Scheduler {
             .push(Box::new(system.into_system()));
     }
 
-    pub fn register_event<E: Event>(&mut self) {
+    pub fn register_event<E: Event>(&mut self) -> bool {
         let event_queue: Box<dyn EventQueueHandler> = Box::new(EventQueue::<E>::default());
         self.resources.insert(
             TypeId::of::<EventQueue<E>>(),
             UnsafeCell::new(
                 Box::new(event_queue) as Box<dyn Any>
             )
-        );
+        ).is_some()
     }
 
     pub fn retrieve_event_queue<E: Event>(&self) -> Option<&EventQueue<E>> {
@@ -112,13 +112,13 @@ impl Scheduler {
         })
     }
     
-    pub fn insert_resource<T: 'static>(&mut self, resource: T) {
+    pub fn insert_resource<T: 'static>(&mut self, resource: T) -> bool {
         let value = UnsafeCell::new(Box::new(resource));
-        self.resources.insert(TypeId::of::<T>(), value);   
+        self.resources.insert(TypeId::of::<T>(), value).is_some()
     }
 
-    pub fn clear_resource<T: 'static>(&mut self) {
-        self.resources.remove(&TypeId::of::<T>());
+    pub fn clear_resource<T: 'static>(&mut self) -> bool {
+        self.resources.remove(&TypeId::of::<T>()).is_some()
     }
 
     pub fn retrieve_resource<T: 'static>(&self) -> Option<&T> {
