@@ -187,7 +187,7 @@ fn event_send_read_works() {
     let mut scheduler = create_scheduler();
     scheduler.insert_system(0., single_event_writer_system);
     scheduler.insert_system(0.1, single_event_reader_system);
-    scheduler.insert_event::<Event1>();
+    scheduler.register_event::<Event1>();
 
     run_scheduler_start(scheduler);
 }
@@ -227,7 +227,7 @@ fn many_reader_writer_works() {
     scheduler.insert_system(0., many_event_writer_system2);
     scheduler.insert_system(0.1, many_event_reader_system1);
     scheduler.insert_system(0.1, many_event_reader_system2);
-    scheduler.insert_event::<Event1>();
+    scheduler.register_event::<Event1>();
 
     run_scheduler_start(scheduler);
 }
@@ -251,7 +251,7 @@ fn event_queue_cleared() {
     scheduler.insert_system(0., event_queue_cleared_writer_system);
     scheduler.insert_system(1., event_queue_cleared_reader_system);
     scheduler.insert_resource(0);
-    scheduler.insert_event::<Event1>();
+    scheduler.register_event::<Event1>();
 
     let scheduler = run_scheduler_start(scheduler);
     run_scheduler_tick(scheduler);
@@ -274,7 +274,7 @@ fn event_queue_auto_cleared_over_tick() {
     let mut scheduler = create_scheduler();
     scheduler.insert_system(1., event_queue_auto_cleared_writer_system);
     scheduler.insert_system(1.1, event_queue_auto_cleared_reader_system);
-    scheduler.insert_event::<Event1>();
+    scheduler.register_event::<Event1>();
 
     run_scheduler_tick(scheduler);
 }

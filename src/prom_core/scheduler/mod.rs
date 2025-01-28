@@ -83,7 +83,7 @@ impl Scheduler {
             .push(Box::new(system.into_system()));
     }
 
-    pub fn insert_event<E: Event>(&mut self) {
+    pub fn register_event<E: Event>(&mut self) {
         let event_queue: Box<dyn EventQueueHandler> = Box::new(EventQueue::<E>::default());
         self.resources.insert(
             TypeId::of::<EventQueue<E>>(),

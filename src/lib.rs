@@ -41,5 +41,17 @@
 pub mod prom_core;
 
 pub mod prelude {
-    pub use super::prom_core::scheduler::injection_types::event::Event;
+    pub use super::prom_core::scheduler::injection_types::{
+        event::{
+            Event, queue::EventQueue, reader::EventReader, writer::EventWriter
+        }, 
+        resource::{
+            mut_referenced::ResMut, referenced::Res
+        }, 
+        world::{
+            command_buffer::CommandBuffer, mutable_world::MutWorld, referenced_world::RefWorld
+        }, 
+    };
+
+    pub use event_driver::EventDriver as Event;
 }

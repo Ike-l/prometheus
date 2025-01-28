@@ -1,5 +1,4 @@
 Log all I/O
-Log all unique instanciation for `App`
 Add way to grep what phase takes 1. Reference, 2. Mutable Reference
 Add ways of using each standalone system(s)
 Techniques: 

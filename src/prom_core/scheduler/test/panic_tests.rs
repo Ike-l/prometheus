@@ -87,7 +87,7 @@ fn event_send_read_same_phase() {
     let mut scheduler = create_scheduler();
     scheduler.insert_system(0., event_writer_system);
     scheduler.insert_system(0., event_reader_system);
-    scheduler.insert_event::<Event1>();
+    scheduler.register_event::<Event1>();
 
     run_scheduler_start(scheduler);
 }
@@ -98,7 +98,7 @@ fn event_read_send_same_phase() {
     let mut scheduler = create_scheduler();
     scheduler.insert_system(0., event_reader_system);
     scheduler.insert_system(0., event_writer_system);
-    scheduler.insert_event::<Event1>();
+    scheduler.register_event::<Event1>();
 
     run_scheduler_start(scheduler);
 }
