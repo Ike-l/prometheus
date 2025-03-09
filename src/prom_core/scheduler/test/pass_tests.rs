@@ -2,7 +2,7 @@
 
 use event_driver::EventDriver;
 
-use crate::{prelude::Event, prom_core::scheduler::injection_types::{event::{reader::EventReader, writer::EventWriter}, resource::{mut_referenced::ResMut, referenced::Res}, world::{command_buffer::CommandBuffer, mutable_world::MutWorld, referenced_world::RefWorld}}};
+use crate::{prelude::Event, prom_core::scheduler::injection_types::{event::{reader::EventReader, writer::EventWriter}, resource::{mut_referenced::ResMut, referenced::Res}, world::{command_queue::WriteWorld, world::ReadWorld}}};
 
 use super::{create_scheduler, run_scheduler_start, run_scheduler_tick};
 
@@ -84,18 +84,7 @@ fn access_mut_over_phases() {
     run_scheduler_start(scheduler);
 }
 
-fn spawn_into_world_system(mut world: MutWorld) {
-    world.spawn((1, true));
-}
-
-fn check_world_phase_system(world: RefWorld) {
-    for (_, (n, b)) in world.query::<(&i32, &bool)>().iter() {
-        assert_eq!(n, &1);
-        assert_eq!(b, &true);
-    }
-}
-
-fn check_world_tick_system(world: RefWorld) {
+fn check_world_tick_system(world: ReadWorld) {
     for (_, (n, b)) in world.query::<(&i32, &bool)>().iter() {
         assert_eq!(n, &1);
         assert_eq!(b, &true);
@@ -105,16 +94,14 @@ fn check_world_tick_system(world: RefWorld) {
 #[test]
 fn persistent_world() {
     let mut scheduler = create_scheduler();
-    scheduler.insert_system(0., spawn_into_world_system);
-    scheduler.insert_system(0.1, check_world_phase_system);
     scheduler.insert_system(1., check_world_tick_system);
 
     let scheduler = run_scheduler_start(scheduler);
     run_scheduler_tick(scheduler);
 }
 
-fn get_ref_world_system1(_: RefWorld) {}
-fn get_ref_world_system2(_: RefWorld) {}
+fn get_ref_world_system1(_: ReadWorld) {}
+fn get_ref_world_system2(_: ReadWorld) {}
 
 #[test]
 fn get_many_ref_world() {
@@ -125,43 +112,39 @@ fn get_many_ref_world() {
     run_scheduler_start(scheduler);
 }
 
-fn command_buffer_spawn_system(mut command: CommandBuffer) {
-    command.spawn((3, false));
+fn command_queue_spawn_system(mut command: WriteWorld) {
+    command.spawn((3, false), None);
+    command.spawn((3, false), None);
+    command.spawn((3, false), None);
+    command.spawn((3, false), None);
 }
 
-fn check_command_buffer_phase_system(world: RefWorld) {
-    assert_eq!(world.len(), 0);
+fn check_command_queue_phase_system(world: ReadWorld) {
+    assert_eq!(world.len(), 4);
 }
 
-fn check_command_buffer_tick_system(world: RefWorld) {
+fn check_command_queue_tick_system(world: ReadWorld) {
+    let mut count = 0;
     for (_, (n, b)) in world.query::<(&i32, &bool)>().iter() {
         assert_eq!(n, &3);
         assert_eq!(b, &false);
+        count += 1;
     }
+
+    assert_eq!(count, 4);
 }
 
 #[test]
-fn command_buffer_on_world() {
+fn command_queue_on_world() {
     let mut scheduler = create_scheduler();
-    scheduler.insert_system(0., command_buffer_spawn_system);
-    scheduler.insert_system(0.1, check_command_buffer_phase_system);
-    scheduler.insert_system(1., check_command_buffer_tick_system);
+    scheduler.insert_system(0., command_queue_spawn_system);
+    scheduler.insert_system(0.1, check_command_queue_phase_system);
+    scheduler.insert_system(1., check_command_queue_tick_system);
 
     let scheduler = run_scheduler_start(scheduler);
     run_scheduler_tick(scheduler);
 }
 
-fn get_ref_command_buffer_system1(_: CommandBuffer) {}
-fn get_ref_command_buffer_system2(_: CommandBuffer) {}
-
-#[test]
-fn get_many_ref_command_buffer() {
-    let mut scheduler = create_scheduler();
-    scheduler.insert_system(0., get_ref_command_buffer_system1);
-    scheduler.insert_system(0., get_ref_command_buffer_system2);
-
-    run_scheduler_start(scheduler);
-}
 
 #[derive(Debug, EventDriver)]
 struct Event1 {

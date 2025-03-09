@@ -40,34 +40,42 @@
 
 pub mod prom_core;
 pub mod prom_plugins;
+pub mod prom_utilities;
 
 pub mod prelude {
-    pub use super::prom_core::scheduler::injection_types::{
-        event::{
-            Event, queue::EventQueue, reader::EventReader, writer::EventWriter
-        }, 
-        resource::{
-            mut_referenced::ResMut, referenced::Res
-        }, 
-        world::{
-            command_buffer::CommandBuffer, mutable_world::MutWorld, referenced_world::RefWorld
-        }, 
+    pub use super::{
+        prom_core::{
+            scheduler::{
+                Scheduler,
+                injection_types::{
+                    event::{
+                        Event, queue::EventQueue, reader::EventReader, writer::EventWriter
+                    }, 
+                    resource::{
+                        mut_referenced::ResMut, referenced::Res
+                    }, 
+                    world::{
+                        command_queue::{WriteWorld, Command}, world::ReadWorld
+                    }, 
+                }
+            },
+            unity::plugin::Plugin,
+            app::{
+                App, 
+                app_builder::AppBuilder
+            },
+        },
+        prom_plugins::prom_plugins,
+        prom_utilities::resources,
     };
-
+    
     pub use event_driver::EventDriver as Event;
+    //pub use hecs::Entity;
+    //pub use cgmath::Matrix4;
+    pub fn concat_title(lhs: &'static str) -> impl Fn(&str) -> String {
+        move |rhs: &str| format!("{}: {}", lhs, rhs)
+    }
 
-    pub use super::prom_core::unity::{
-        plugin::Plugin, 
-        registry::{
-            identity::Identity, 
-            iterable_registry::{
-                IterableRegistry, OwnedIterableRegistry
-            }, 
-            lookup_registry::{
-                LookupRegistry, OwnedLookupRegistry
-            }
-        }
-    };
-
-    pub use super::prom_core::app::{App, app_builder::AppBuilder};
+    pub type SupportedFloat = f32;
+    pub type Padding = u32;
 }

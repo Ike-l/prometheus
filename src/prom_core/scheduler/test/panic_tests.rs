@@ -2,7 +2,7 @@
 
 use event_driver::EventDriver;
 
-use crate::{prelude::Event, prom_core::scheduler::injection_types::{event::{reader::EventReader, writer::EventWriter}, resource::{mut_referenced::ResMut, referenced::Res}, world::{mutable_world::MutWorld, referenced_world::RefWorld}}};
+use crate::{prelude::{Event, WriteWorld}, prom_core::scheduler::injection_types::{event::{reader::EventReader, writer::EventWriter}, resource::{mut_referenced::ResMut, referenced::Res}}};
 
 use super::{create_scheduler, run_scheduler_start};
 
@@ -44,32 +44,6 @@ fn mut_and_res() {
     scheduler.insert_system(0., mut_and_ref_system1);
     scheduler.insert_system(0., mut_and_ref_system2);
     scheduler.insert_resource(1);
-
-    run_scheduler_start(scheduler);
-}
-
-fn ref_and_mut_world_system1(_: RefWorld) {}
-fn ref_and_mut_world_system2(_: MutWorld) {}
-
-#[test]
-#[should_panic(expected = "conflicting access in system; attempting to access hecs::world::World mutably twice; consider creating a new phase")]
-fn ref_and_mut_world() {
-    let mut scheduler = create_scheduler();
-    scheduler.insert_system(0., ref_and_mut_world_system1);
-    scheduler.insert_system(0., ref_and_mut_world_system2);
-
-    run_scheduler_start(scheduler);
-}
-
-fn mut_world_system1(_: MutWorld) {}
-fn mut_world_system2(_: MutWorld) {}
-
-#[test]
-#[should_panic(expected = "conflicting access in system; attempting to access hecs::world::World mutably twice; consider creating a new phase")]
-fn get_many_mut_world() {
-    let mut scheduler = create_scheduler();
-    scheduler.insert_system(0., mut_world_system1);
-    scheduler.insert_system(0., mut_world_system2);
 
     run_scheduler_start(scheduler);
 }
@@ -124,4 +98,21 @@ fn out_of_bounds_phase1() {
 fn out_of_bounds_phase2() {
     let mut scheduler = create_scheduler();
     scheduler.insert_system(4., dummy_system)
+}
+
+fn get_ref_command_queue_system1(mut world: WriteWorld) {
+    world.spawn((1,), None);
+}
+fn get_ref_command_queue_system2(mut world: WriteWorld) {
+    world.spawn((1,), None);
+}
+
+#[test]
+#[should_panic]
+fn get_many_ref_command_queue() {
+    let mut scheduler = create_scheduler();
+    scheduler.insert_system(0., get_ref_command_queue_system1);
+    scheduler.insert_system(0., get_ref_command_queue_system2);
+
+    run_scheduler_start(scheduler);
 }

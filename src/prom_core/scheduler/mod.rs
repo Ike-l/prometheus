@@ -1,10 +1,12 @@
 use std::{any::{type_name, Any, TypeId}, cell::UnsafeCell, collections::{BTreeMap, HashMap}, ops::Bound::{Excluded, Included}};
 
-use injection_types::event::{queue::{EventQueue, EventQueueHandler}, reader::EventReader, writer::EventWriter};
+use injection_types::{event::{queue::{EventQueue, EventQueueHandler}, reader::EventReader, writer::EventWriter}, world::command_queue::CommandQueue};
 use ordered_float::OrderedFloat;
 use system::{IntoSystem, System};
 
-use crate::prelude::Event;
+use crate::prelude::{Command, Event};
+
+use super::app::world_registry::WorldRegistry;
 
 pub mod injection_types;
 pub mod system;
@@ -59,11 +61,7 @@ impl Scheduler {
         
         if start == Self::TICK { 
             self.process_event_queues();
-            if let Err(e) = self.apply_command_buffer() {
-                log::warn!("{}", e)
-            }
-        } else if end_exclusive == Self::TICK {
-            if let Err(e) = self.apply_command_buffer() {
+            if let Err(e) = self.clear_command_queue() {
                 log::warn!("{}", e)
             }
         }
@@ -174,18 +172,32 @@ impl Scheduler {
         }
     }
 
-    fn apply_command_buffer(&mut self) -> Result<(), &'static str> {
-        let mut world = match self.retrieve_resource_mut::<hecs::World>() {
+    fn clear_command_queue(&mut self) -> Result<(), &'static str> {
+        let world = match self.retrieve_resource_mut::<hecs::World>() {
             Some(world) => world,
             None => return Err("Failed to retrieve world")
         };
 
-        let command_buffer = match self.retrieve_resource_mut::<hecs::CommandBuffer>() {
+        let world_registry = match self.retrieve_resource_mut::<WorldRegistry>() {
+            Some(registry) => registry,
+            None => return Err("Failed to retrieve world registry")
+        };
+
+        let cmd_buf = match self.retrieve_resource_mut::<CommandQueue>() {
             Some(cmd_buffer) => cmd_buffer,
             None => return Err("Failed to retrieve command buffer")
         };
 
-        command_buffer.run_on(&mut world);
+        while let Some(command) = cmd_buf.pop() {
+            match command {
+                Command::Despawn(entity) => {
+                    let _ = world_registry.remove_entity(&entity);
+                    let _ = world.despawn(entity);
+                },
+                _ => {}
+            }
+        }
+        
         Ok(())
     }
 

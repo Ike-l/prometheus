@@ -1,24 +1,31 @@
 use std::any::type_name;
 
+use world_registry::WorldRegistry;
 use event::{DeviceEventBus, WindowEventBus};
-use hecs::{CommandBuffer, World};
+use hecs::World;
 use winit::{application::ApplicationHandler, event::{DeviceEvent, DeviceId, StartCause, WindowEvent}, event_loop::ActiveEventLoop, window::WindowId};
 
-use crate::prelude::Event;
+use crate::{prelude::Event, prom_core::scheduler::injection_types::world::command_queue::CommandQueue};
 
 use super::{scheduler::{system::{IntoSystem, System}, Scheduler}, unity::plugin::Plugin};
 
 pub mod event;
 pub mod app_builder;
+pub mod world_registry;
 
 #[derive(Debug, Default)]
 pub struct App {
     scheduler: Scheduler,
+    title: &'static str,
     /// Use offset to mitigate independent access crashes by setting it before adding systems/plugins and setting it back afterwards
     pub phase_offset: f64,
 }
 
 impl App {
+    pub fn title(&self) -> &'static str {
+        self.title
+    }    
+
     pub fn insert_plugin(&mut self, plugin: Box<dyn Plugin>) { 
         log::info!("Inserting plugin: {}", plugin.id());
         plugin.build(self);
@@ -68,7 +75,7 @@ impl ApplicationHandler for App {
         log::info!("Resumed App");
         self.phase_offset = 0.0;
         //self.insert_system(Scheduler::END-f64::MIN_POSITIVE, loop_start);
-
+        
         let event_loop_ptr: *const ActiveEventLoop = event_loop;
         let app_ptr: *mut App = self;
         unsafe {
@@ -79,8 +86,9 @@ impl ApplicationHandler for App {
             self.insert_resource(app_ref);
         }
 
-        self.insert_resource(World::new());
-        self.insert_resource(CommandBuffer::new());
+        self.insert_default_resource::<World>();
+        self.insert_default_resource::<WorldRegistry>();
+        self.insert_default_resource::<CommandQueue>();
 
         self.register_event::<WindowEventBus>();
         self.register_event::<DeviceEventBus>();
@@ -89,10 +97,8 @@ impl ApplicationHandler for App {
 
         self.scheduler.run(Scheduler::START, Scheduler::TICK);
 
-        self.scheduler.clear_resource::<&ActiveEventLoop>();
-        self.scheduler.clear_resource::<&mut App>();
-        log::info!("Cleared resource: &ActiveEventLoop");
-        log::info!("Cleared resource: &mut App");
+        self.clear_resource::<&ActiveEventLoop>();
+        self.clear_resource::<&mut App>();
     }
 
     fn window_event(

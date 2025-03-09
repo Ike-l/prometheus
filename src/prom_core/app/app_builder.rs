@@ -20,6 +20,10 @@ impl Default for AppBuilder {
 }
 
 impl AppBuilder {
+    pub fn set_title(&mut self, title: &'static str) {
+        self.app.title = title;
+    }
+    
     pub fn run(mut self) -> Result<(), EventLoopError> {
         log::info!("Running app");
 
